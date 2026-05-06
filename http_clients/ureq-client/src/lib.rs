@@ -4,7 +4,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use wacore::net::{HttpClient, HttpRequest, HttpResponse, StreamingHttpResponse};
+use wa_rs_core::net::{HttpClient, HttpRequest, HttpResponse, StreamingHttpResponse};
 
 /// Matches `MAX_FILE_SIZE_BYTES` in `WAWebServerPropConstants` (2 GiB).
 /// Overrides ureq's 10 MiB default on `read_to_vec()`.

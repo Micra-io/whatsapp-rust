@@ -15,11 +15,11 @@ use hkdf::Hkdf;
 use prost::Message;
 use rand::Rng;
 use sha2::Sha256;
-use wacore_binary::Jid;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Node, NodeContentRef, NodeRef};
-use wacore_libsignal::crypto::{aes_256_gcm_decrypt, aes_256_gcm_encrypt};
-use waproto::whatsapp as wa;
+use wa_rs_binary::Jid;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Node, NodeContentRef, NodeRef};
+use wa_rs_libsignal::crypto::{aes_256_gcm_decrypt, aes_256_gcm_encrypt};
+use wa_rs_proto::whatsapp as wa;
 
 const MEDIA_RETRY_HKDF_INFO: &str = "WhatsApp Media Retry Notification";
 const ENC_IV_SIZE: usize = 12;

@@ -1,5 +1,5 @@
 use std::sync::OnceLock;
-use wacore_binary::{Jid, SERVER_JID};
+use wa_rs_binary::{Jid, SERVER_JID};
 
 static SERVER_JID_CACHE: OnceLock<Jid> = OnceLock::new();
 

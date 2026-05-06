@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use wacore_binary::{Jid, JidExt, MessageId, MessageServerId};
-use waproto::whatsapp as wa;
+use wa_rs_binary::{Jid, JidExt, MessageId, MessageServerId};
+use wa_rs_proto::whatsapp as wa;
 
 use crate::WireEnum;
 
@@ -189,7 +189,7 @@ mod tests {
 
     #[test]
     fn test_decrypt_fail_hide_logic_for_edits() {
-        // Documents the logic used in prepare_group_stanza (wacore/src/send.rs).
+        // Documents the logic used in prepare_group_stanza (wa_rs_core/src/send.rs).
         // The decrypt-fail="hide" attribute is added for edited messages to hide
         // failed decryption attempts. However, admin revokes should NOT have it
         // because WhatsApp Web doesn't include it, and the server rejects it.

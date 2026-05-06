@@ -9,12 +9,12 @@ use diesel::upsert::excluded;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use log::warn;
 use std::sync::Arc;
-use wacore::appstate::hash::HashState;
-use wacore::appstate::processor::AppStateMutationMAC;
-use wacore::libsignal::protocol::{KeyPair, PrivateKey, PublicKey};
-use wacore::store::Device as CoreDevice;
-use wacore::store::error::{Result, StoreError};
-use wacore::store::traits::*;
+use wa_rs_core::appstate::hash::HashState;
+use wa_rs_core::appstate::processor::AppStateMutationMAC;
+use wa_rs_core::libsignal::protocol::{KeyPair, PrivateKey, PublicKey};
+use wa_rs_core::store::Device as CoreDevice;
+use wa_rs_core::store::error::{Result, StoreError};
+use wa_rs_core::store::traits::*;
 
 /// Internal error type that preserves the Diesel error for structured matching
 /// before converting to `StoreError`. Used in retry loops where we need to
@@ -311,7 +311,7 @@ impl SqliteStore {
         let account_data: Option<Arc<[u8]>> = device_data
             .account
             .as_ref()
-            .map(|a| Arc::from(wacore::store::device::account_serde::to_bytes(a)));
+            .map(|a| Arc::from(wa_rs_core::store::device::account_serde::to_bytes(a)));
         let registration_id = device_data.registration_id as i32;
         let signed_pre_key_id = device_data.signed_pre_key_id as i32;
         let signed_pre_key_signature: Arc<[u8]> =
@@ -431,7 +431,7 @@ impl SqliteStore {
 
     pub async fn create_new_device(&self) -> Result<i32> {
         let device_id = self.device_id;
-        let new_device = wacore::store::Device::new();
+        let new_device = wa_rs_core::store::Device::new();
 
         let noise_key_data: Arc<[u8]> = self.serialize_keypair(&new_device.noise_key)?.into();
         let identity_key_data: Arc<[u8]> = self.serialize_keypair(&new_device.identity_key)?.into();
@@ -559,7 +559,7 @@ impl SqliteStore {
             let account = row
                 .account
                 .map(|data| {
-                    wacore::store::device::account_serde::from_bytes(&data)
+                    wa_rs_core::store::device::account_serde::from_bytes(&data)
                         .map_err(|e| StoreError::Serialization(Box::new(e)))
                 })
                 .transpose()?;
@@ -580,8 +580,8 @@ impl SqliteStore {
                 app_version_secondary: row.app_version_secondary as u32,
                 app_version_tertiary: row.app_version_tertiary.try_into().unwrap_or(0u32),
                 app_version_last_fetched_ms: row.app_version_last_fetched_ms,
-                device_props: wacore::store::device::DEVICE_PROPS.clone(),
-                client_profile: wacore::client_profile::ClientProfile::web(),
+                device_props: wa_rs_core::store::device::DEVICE_PROPS.clone(),
+                client_profile: wa_rs_core::client_profile::ClientProfile::web(),
                 edge_routing_info: row.edge_routing_info,
                 props_hash: row.props_hash,
                 next_pre_key_id: row.next_pre_key_id as u32,
@@ -1780,7 +1780,7 @@ impl ProtocolStore for SqliteStore {
                 .map(|(jid, has_key)| (jid.to_string(), *has_key))
                 .collect(),
         );
-        let now = wacore::time::now_secs();
+        let now = wa_rs_core::time::now_secs();
         self.with_retry("set_sender_key_status", || {
             let group_jid = group_jid.clone();
             let owned_entries = Arc::clone(&owned_entries);
@@ -2035,7 +2035,7 @@ impl ProtocolStore for SqliteStore {
         let address = address.to_string();
         let message_id = message_id.to_string();
         let base_key = base_key.to_vec();
-        let now = wacore::time::now_secs() as i32;
+        let now = wa_rs_core::time::now_secs() as i32;
         tokio::task::spawn_blocking(move || -> Result<()> {
             let mut conn = pool
                 .get()
@@ -2122,7 +2122,7 @@ impl ProtocolStore for SqliteStore {
         let device_id = self.device_id;
         let devices_json = serde_json::to_string(&record.devices)
             .map_err(|e| StoreError::Serialization(Box::new(e)))?;
-        let now = wacore::time::now_secs() as i32;
+        let now = wa_rs_core::time::now_secs() as i32;
         tokio::task::spawn_blocking(move || -> Result<()> {
             let mut conn = pool
                 .get()
@@ -2161,7 +2161,7 @@ impl ProtocolStore for SqliteStore {
             return Ok(());
         }
         let device_id = self.device_id;
-        let now = wacore::time::now_secs() as i32;
+        let now = wa_rs_core::time::now_secs() as i32;
 
         // Pre-serialize devices_json once (outside the retry loop and outside
         // spawn_blocking) so retries are zero-allocation. Each row carries its
@@ -2322,7 +2322,7 @@ impl ProtocolStore for SqliteStore {
         let device_id = self.device_id;
         let jid = jid.to_string();
         let entry = entry.clone();
-        let now = wacore::time::now_secs();
+        let now = wa_rs_core::time::now_secs();
         tokio::task::spawn_blocking(move || -> Result<()> {
             let mut conn = pool
                 .get()
@@ -2566,7 +2566,7 @@ impl DeviceStore for SqliteStore {
                 .get()
                 .map_err(|e| StoreError::Connection(Box::new(e)))?;
 
-            let timestamp = wacore::time::now_secs();
+            let timestamp = wa_rs_core::time::now_secs();
 
             // Construct target path: db_path.snapshot-TIMESTAMP-SANITIZED_NAME
             let target_path = format!("{}.snapshot-{}-{}", db_path, timestamp, sanitized_name);
@@ -3003,7 +3003,7 @@ mod tests {
     async fn test_server_cert_chain_survives_save_load_roundtrip() {
         use portable_atomic::AtomicU64;
         use std::sync::atomic::Ordering;
-        use wacore::store::device::{CachedNoiseCert, CachedServerCertChain};
+        use wa_rs_core::store::device::{CachedNoiseCert, CachedServerCertChain};
 
         static COUNTER: AtomicU64 = AtomicU64::new(200);
         let id = COUNTER.fetch_add(1, Ordering::Relaxed);

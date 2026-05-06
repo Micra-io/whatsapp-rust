@@ -1,5 +1,5 @@
 [package]
-name = "whatsapp-rust-tokio-transport"
+name = "wa-rs-tokio-transport"
 version = "0.5.0"
 edition = "2024"
 authors = ["João Lucas <jlucaso@hotmail.com>"]
@@ -29,7 +29,7 @@ tokio-websockets = { version = "0.13.0", features = [
   "rand",
   "ring",
 ] }
-wacore = { workspace = true }
+wa-rs-core = { workspace = true }
 webpki-roots = "1.0.4"
 
 [lints]

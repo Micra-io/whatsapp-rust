@@ -1,2 +1,2 @@
-// Re-export from wacore — the canonical implementation lives there now.
-pub use wacore::store::signal_cache::SignalStoreCache;
+// Re-export from wa_rs_core — the canonical implementation lives there now.
+pub use wa_rs_core::store::signal_cache::SignalStoreCache;

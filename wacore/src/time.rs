@@ -32,7 +32,7 @@ struct ChronoTimeProvider;
 
 impl TimeProvider for ChronoTimeProvider {
     // The single legitimate call to `chrono::Utc::now()`: this IS the default
-    // provider backing `wacore::time::now_utc()`. Everywhere else must go
+    // provider backing `wa_rs_core::time::now_utc()`. Everywhere else must go
     // through the abstraction — see clippy.toml.
     #[allow(clippy::disallowed_methods)]
     fn now_millis(&self) -> i64 {
@@ -123,7 +123,7 @@ struct StdMonotonicProvider {
 #[cfg(not(target_arch = "wasm32"))]
 impl StdMonotonicProvider {
     // The single legitimate call to `std::time::Instant::now()`: this IS the
-    // default provider backing `wacore::time::Instant`. Everywhere else must
+    // default provider backing `wa_rs_core::time::Instant`. Everywhere else must
     // go through this abstraction — see clippy.toml.
     #[allow(clippy::disallowed_methods)]
     fn new() -> Self {

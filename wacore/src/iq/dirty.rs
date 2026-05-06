@@ -1,9 +1,9 @@
 use crate::WireEnum;
 use crate::iq::spec::IqSpec;
 use crate::request::InfoQuery;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{Node, NodeContent, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{Node, NodeContent, NodeRef};
 
 pub const DIRTY_NAMESPACE: &str = "urn:xmpp:whatsapp:dirty";
 

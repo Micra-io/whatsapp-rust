@@ -16,12 +16,12 @@ use prost::Message as ProtoMessage;
 use rand::{CryptoRng, Rng};
 use std::collections::HashSet;
 use std::future::Future;
-use wacore_binary::Node;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, JidExt as _};
-use wacore_libsignal::crypto::aes_256_cbc_encrypt_into;
-use waproto::whatsapp as wa;
-use waproto::whatsapp::message::DeviceSentMessage;
+use wa_rs_binary::Node;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, JidExt as _};
+use wa_rs_libsignal::crypto::aes_256_cbc_encrypt_into;
+use wa_rs_proto::whatsapp as wa;
+use wa_rs_proto::whatsapp::message::DeviceSentMessage;
 
 /// Wire-format constants (MsgCreateDeviceStanza.js).
 pub(crate) mod stanza {
@@ -1510,8 +1510,8 @@ pub fn ensure_status_participants(
     mut stanza: Node,
     group_info: &crate::client::context::GroupInfo,
 ) -> Node {
-    use wacore_binary::NodeContent;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::NodeContent;
+    use wa_rs_binary::builder::NodeBuilder;
 
     // Build bare <to jid="USER_JID"/> entries for each participant.
     // WhatsApp Web uses USER_JID (not DEVICE_JID) for the participantList.
@@ -1537,7 +1537,7 @@ pub fn ensure_status_participants(
         // <participants> already exists (from SKDM distribution).
         // Add bare <to> user JID entries for users whose devices are NOT
         // already represented by SKDM device-level entries.
-        let existing_users: std::collections::HashSet<wacore_binary::CompactString> =
+        let existing_users: std::collections::HashSet<wa_rs_binary::CompactString> =
             participants_node
                 .children()
                 .unwrap_or_default()
@@ -1645,7 +1645,7 @@ mod tests {
     use crate::client::context::{GroupInfo, SendContextResolver};
     use crate::libsignal::protocol::{IdentityKeyPair, KeyPair, PreKeyBundle};
     use std::collections::HashMap;
-    use wacore_binary::Jid;
+    use wa_rs_binary::Jid;
 
     mod assemble_status_participants {
         use super::*;
@@ -2705,7 +2705,7 @@ mod tests {
         };
         use crate::types::message::AddressingMode;
         use std::collections::HashMap;
-        use wacore_binary::NodeContent;
+        use wa_rs_binary::NodeContent;
 
         struct MemSessionStore(HashMap<ProtocolAddress, Vec<u8>>);
         impl MemSessionStore {
@@ -3134,9 +3134,9 @@ mod tests {
         }
 
         #[test]
-        fn rejects_wacore_iq_error_without_server_error_code_wrapper() {
-            // wacore::IqError::ServerError is NOT the same as ServerErrorCode.
-            // This simulates the old bug: if someone wraps wacore IqError directly
+        fn rejects_wa_rs_core_iq_error_without_server_error_code_wrapper() {
+            // wa_rs_core::IqError::ServerError is NOT the same as ServerErrorCode.
+            // This simulates the old bug: if someone wraps wa_rs_core IqError directly
             // without the ServerErrorCode wrapper, the check should not match.
             let err = anyhow::Error::new(crate::request::IqError::ServerError {
                 code: 406,
@@ -3153,7 +3153,7 @@ mod tests {
         use crate::client::context::GroupInfo;
         use crate::types::message::AddressingMode;
         use std::collections::{HashMap, HashSet};
-        use wacore_binary::{CompactString, Jid};
+        use wa_rs_binary::{CompactString, Jid};
 
         fn lid_device(user: &str, dev: u16) -> Jid {
             Jid::lid_device(user.to_string(), dev)

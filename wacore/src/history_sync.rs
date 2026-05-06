@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use thiserror::Error;
-use wacore_binary::zlib_pool::decompress_zlib_pooled;
+use wa_rs_binary::zlib_pool::decompress_zlib_pooled;
 
 #[derive(Debug, Error)]
 pub enum HistorySyncError {
@@ -265,7 +265,7 @@ pub(crate) fn extract_tc_token_fields(data: &[u8]) -> Option<TcTokenCandidate> {
     let conv = ConversationTcTokenFields::decode(data).ok()?;
 
     // Early-out for non-1:1 conversations
-    if let Some(parts) = wacore_binary::jid::parse_jid_fast(&conv.id)
+    if let Some(parts) = wa_rs_binary::jid::parse_jid_fast(&conv.id)
         && (parts.server == "g.us" || parts.server == "newsletter" || parts.server == "bot")
     {
         return None;
@@ -298,7 +298,7 @@ mod tests {
     use flate2::write::ZlibEncoder;
     use prost::Message;
     use std::io::Write;
-    use waproto::whatsapp as wa;
+    use wa_rs_proto::whatsapp as wa;
 
     /// Encode a HistorySync proto and zlib-compress it.
     fn encode_and_compress(hs: &wa::HistorySync) -> Vec<u8> {

@@ -2,13 +2,13 @@
 
 use e2e_tests::{TestClient, send_and_expect_text};
 use log::info;
-use wacore::libsignal::protocol::SessionRecord;
-use wacore::types::events::Event;
+use wa_rs_core::libsignal::protocol::SessionRecord;
+use wa_rs_core::types::events::Event;
 
 /// Scan backend for sessions matching a user across device IDs 0..=5.
 /// Returns Vec<(address, has_pending_pre_key)> for all found sessions.
 async fn scan_sessions(
-    backend: &dyn wacore::store::traits::SignalStore,
+    backend: &dyn wa_rs_core::store::traits::SignalStore,
     user: &str,
     server: &str,
 ) -> anyhow::Result<Vec<(String, bool)>> {

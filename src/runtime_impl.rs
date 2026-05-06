@@ -6,7 +6,7 @@ mod tokio_impl {
     use std::time::Duration;
 
     use async_trait::async_trait;
-    use wacore::runtime::{AbortHandle, Runtime};
+    use wa_rs_core::runtime::{AbortHandle, Runtime};
 
     pub struct TokioRuntime;
 

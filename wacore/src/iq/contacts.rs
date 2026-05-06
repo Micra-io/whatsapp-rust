@@ -26,9 +26,9 @@ use crate::iq::spec::IqSpec;
 use crate::iq::tctoken::build_tc_token_node;
 use crate::request::InfoQuery;
 use anyhow::anyhow;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{NodeContent, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{NodeContent, NodeRef};
 
 /// Profile picture information.
 #[derive(Debug, Clone)]

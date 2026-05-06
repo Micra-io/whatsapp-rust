@@ -1,6 +1,6 @@
 use e2e_tests::{TestClient, text_msg};
 use log::info;
-use wacore::types::events::Event;
+use wa_rs_core::types::events::Event;
 
 #[tokio::test]
 async fn test_offline_message_delivery_on_reconnect() -> anyhow::Result<()> {

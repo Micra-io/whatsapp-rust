@@ -20,9 +20,9 @@
 
 use crate::client::Client;
 use crate::request::IqError;
-use wacore::iq::tctoken::{IssuePrivacyTokensSpec, ReceivedTcToken};
-use wacore::store::traits::TcTokenEntry;
-use wacore_binary::Jid;
+use wa_rs_core::iq::tctoken::{IssuePrivacyTokensSpec, ReceivedTcToken};
+use wa_rs_core::store::traits::TcTokenEntry;
+use wa_rs_binary::Jid;
 
 /// Feature handle for trusted contact token operations.
 pub struct TcToken<'a> {
@@ -57,7 +57,7 @@ impl<'a> TcToken<'a> {
     pub async fn prune_expired(&self) -> Result<u32, anyhow::Error> {
         let backend = self.client.persistence_manager.backend();
         let tc_config = self.client.tc_token_config().await;
-        let cutoff = wacore::iq::tctoken::tc_token_expiration_cutoff_with(&tc_config);
+        let cutoff = wa_rs_core::iq::tctoken::tc_token_expiration_cutoff_with(&tc_config);
         let deleted = backend.delete_expired_tc_tokens(cutoff).await?;
 
         if deleted > 0 {

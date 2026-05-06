@@ -1,6 +1,6 @@
 use e2e_tests::TestClient;
 use log::info;
-use whatsapp_rust::waproto::whatsapp as wa;
+use wa_rs::wa_rs_proto::whatsapp as wa;
 
 // Note: These tests verify the full app state mutation pipeline (encode → encrypt →
 // send IQ → server acknowledgement). The mock server cannot decrypt mutations back,
@@ -168,7 +168,7 @@ async fn test_mute_chat_with_expiry() -> anyhow::Result<()> {
     client_a.wait_for_app_state_sync().await?;
 
     // Mute for 8 hours from now
-    let mute_end = wacore::time::now_millis() + (8 * 60 * 60 * 1000);
+    let mute_end = wa_rs_core::time::now_millis() + (8 * 60 * 60 * 1000);
 
     client_a
         .client

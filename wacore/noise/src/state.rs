@@ -1,7 +1,7 @@
 use crate::error::{NoiseError, Result};
 use hkdf::Hkdf;
 use sha2::{Digest, Sha256};
-use wacore_libsignal::crypto::{
+use wa_rs_libsignal::crypto::{
     GcmInPlaceBuffer, aes_256_gcm_decrypt, aes_256_gcm_decrypt_in_place, aes_256_gcm_encrypt,
     aes_256_gcm_encrypt_in_place,
 };
@@ -60,7 +60,7 @@ impl NoiseCipher {
     /// Decrypts ciphertext (with 16-byte tag appended) in-place within the
     /// provided buffer. On return, `buffer` holds the plaintext (tag removed).
     /// Accepts any [`NoiseBuffer`] (`Vec<u8>` or `bytes::BytesMut`).
-    /// Zero allocations with the default [`wacore_libsignal::crypto::RustCryptoProvider`].
+    /// Zero allocations with the default [`wa_rs_libsignal::crypto::RustCryptoProvider`].
     pub fn decrypt_in_place_with_counter<B: NoiseBuffer>(
         &self,
         counter: u32,

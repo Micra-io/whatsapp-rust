@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::protocol::ProtocolNode;
 use anyhow::anyhow;
-use wacore_binary::{NodeContentRef, NodeRef};
+use wa_rs_binary::{NodeContentRef, NodeRef};
 
 /// Get a required child node by tag from a `NodeRef`.
 pub(crate) fn required_child<'a>(

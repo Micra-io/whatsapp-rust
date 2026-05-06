@@ -1,5 +1,5 @@
 //! Integration tests for the full Noise handshake orchestration in
-//! `whatsapp_rust::handshake::do_handshake`.
+//! `wa_rs::handshake::do_handshake`.
 //!
 //! Each test stands up an in-process Noise responder, drives the client
 //! through one or more handshakes, and asserts on the outcome plus any
@@ -8,7 +8,7 @@
 //!
 //! These tests do NOT depend on the external mock server (bartender) —
 //! the responder side is implemented inline using the same primitives
-//! that `wacore-noise` exports for unit-test use.
+//! that `wa_rs_core-noise` exports for unit-test use.
 //!
 //! Coverage:
 //!   - cold-start XX populates the cert chain on disk
@@ -29,14 +29,14 @@ use std::sync::Mutex as StdMutex;
 use std::sync::atomic::AtomicU32;
 use std::time::Duration;
 
-use wacore::handshake::NoiseHandshake;
-use wacore::libsignal::protocol::KeyPair;
-use wacore_binary::consts::{NOISE_PATTERN_IK, NOISE_PATTERN_XX, WA_CONN_HEADER};
-use wacore_noise::test_util::build_cert_chain_bytes;
-use whatsapp_rust::waproto::whatsapp as wa;
+use wa_rs_core::handshake::NoiseHandshake;
+use wa_rs_core::libsignal::protocol::KeyPair;
+use wa_rs_binary::consts::{NOISE_PATTERN_IK, NOISE_PATTERN_XX, WA_CONN_HEADER};
+use wa_rs_noise::test_util::build_cert_chain_bytes;
+use wa_rs::wa_rs_proto::whatsapp as wa;
 
-use whatsapp_rust::handshake::do_handshake;
-use whatsapp_rust::transport::{Transport, TransportEvent};
+use wa_rs::handshake::do_handshake;
+use wa_rs::transport::{Transport, TransportEvent};
 
 /// In-process responder driving Noise XX or IK from the server side.
 /// Holds the long-lived server identity keypair and the cert chain
@@ -161,7 +161,7 @@ async fn xx_serve_full(
     };
     let mut sh_bytes = Vec::new();
     server_hello.encode(&mut sh_bytes).unwrap();
-    let framed = wacore::framing::encode_frame(&sh_bytes, None).unwrap();
+    let framed = wa_rs_core::framing::encode_frame(&sh_bytes, None).unwrap();
     events_tx
         .send(TransportEvent::DataReceived(framed.into()))
         .await
@@ -227,7 +227,7 @@ async fn ik_serve_accept(
     };
     let mut sh_bytes = Vec::new();
     server_hello.encode(&mut sh_bytes).unwrap();
-    let framed = wacore::framing::encode_frame(&sh_bytes, None).unwrap();
+    let framed = wa_rs_core::framing::encode_frame(&sh_bytes, None).unwrap();
     events_tx
         .send(TransportEvent::DataReceived(framed.into()))
         .await
@@ -237,7 +237,7 @@ async fn ik_serve_accept(
 /// Waits up to ~3s for the captured-sent buffer to reach `min_count`
 /// entries. Polls every 5 ms; tight enough for unit tests.
 async fn wait_for_send(transport: &Arc<CaptureTransport>, min_count: usize) {
-    let start = wacore::time::Instant::now();
+    let start = wa_rs_core::time::Instant::now();
     let timeout = Duration::from_secs(3);
     loop {
         if transport.sent.lock().unwrap().len() >= min_count {
@@ -255,28 +255,28 @@ async fn wait_for_send(transport: &Arc<CaptureTransport>, min_count: usize) {
 }
 
 /// Builds a fresh PersistenceManager backed by an in-memory store.
-async fn pm() -> Arc<whatsapp_rust::store::persistence_manager::PersistenceManager> {
-    let backend: Arc<dyn whatsapp_rust::store::traits::Backend> =
-        Arc::new(wacore::store::InMemoryBackend::new());
+async fn pm() -> Arc<wa_rs::store::persistence_manager::PersistenceManager> {
+    let backend: Arc<dyn wa_rs::store::traits::Backend> =
+        Arc::new(wa_rs_core::store::InMemoryBackend::new());
     Arc::new(
-        whatsapp_rust::store::persistence_manager::PersistenceManager::new(backend)
+        wa_rs::store::persistence_manager::PersistenceManager::new(backend)
             .await
             .expect("pm init"),
     )
 }
 
 /// `pm()` seeded with a `pn`, so `select_pattern` will consider IK.
-async fn paired_pm() -> Arc<whatsapp_rust::store::persistence_manager::PersistenceManager> {
+async fn paired_pm() -> Arc<wa_rs::store::persistence_manager::PersistenceManager> {
     let pm = pm().await;
-    pm.process_command(wacore::store::DeviceCommand::SetId(Some(
+    pm.process_command(wa_rs_core::store::DeviceCommand::SetId(Some(
         "12345@s.whatsapp.net".parse().unwrap(),
     )))
     .await;
     pm
 }
 
-fn runtime() -> Arc<dyn wacore::runtime::Runtime> {
-    Arc::new(whatsapp_rust::runtime_impl::TokioRuntime)
+fn runtime() -> Arc<dyn wa_rs_core::runtime::Runtime> {
+    Arc::new(wa_rs::runtime_impl::TokioRuntime)
 }
 
 #[tokio::test]
@@ -409,7 +409,7 @@ async fn ik_serve_fallback_with_corrupt_payloads(
     };
     let mut sh_bytes = Vec::new();
     server_hello.encode(&mut sh_bytes).unwrap();
-    let framed = wacore::framing::encode_frame(&sh_bytes, None).unwrap();
+    let framed = wa_rs_core::framing::encode_frame(&sh_bytes, None).unwrap();
     events_tx
         .send(TransportEvent::DataReceived(framed.into()))
         .await
@@ -426,7 +426,7 @@ async fn post_xxfallback_failure_does_not_invalidate_ik_cache() {
     // Pre-seed a valid-looking chain with a sentinel `not_after` so we can
     // distinguish "untouched" from "cleared and rewritten by some path".
     const SENTINEL_NOT_AFTER: i64 = 1_899_999_999;
-    use wacore::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
+    use wa_rs_core::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
     pm.process_command(DeviceCommand::SetServerCertChain(CachedServerCertChain {
         intermediate: CachedNoiseCert {
             key: [0xCC; 32],
@@ -494,7 +494,7 @@ async fn ik_continue_does_not_overwrite_cached_chain() {
 
     // Sentinel distinct from anything `build_cert_chain_bytes` produces.
     const SENTINEL_NOT_AFTER: i64 = 1_899_999_999;
-    use wacore::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
+    use wa_rs_core::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
     pm.process_command(DeviceCommand::SetServerCertChain(CachedServerCertChain {
         intermediate: CachedNoiseCert {
             key: [0xCC; 32],
@@ -581,7 +581,7 @@ async fn xx_after_pair_success_persists_cert_chain() {
         "unpaired XX must not persist chain"
     );
 
-    pm.process_command(wacore::store::DeviceCommand::SetId(Some(
+    pm.process_command(wa_rs_core::store::DeviceCommand::SetId(Some(
         "12345@s.whatsapp.net".parse().unwrap(),
     )))
     .await;
@@ -690,7 +690,7 @@ async fn ik_serve_force_fallback_then_consume_finish(
     // Build XXfallback responder state matching what the initiator will
     // construct after seeing `static != null`.
     let mut noise = NoiseHandshake::new(
-        wacore_binary::consts::NOISE_PATTERN_XXFALLBACK,
+        wa_rs_binary::consts::NOISE_PATTERN_XXFALLBACK,
         &WA_CONN_HEADER,
     )
     .unwrap();
@@ -719,7 +719,7 @@ async fn ik_serve_force_fallback_then_consume_finish(
     };
     let mut sh_bytes = Vec::new();
     server_hello.encode(&mut sh_bytes).unwrap();
-    let framed = wacore::framing::encode_frame(&sh_bytes, None).unwrap();
+    let framed = wa_rs_core::framing::encode_frame(&sh_bytes, None).unwrap();
     events_tx
         .send(TransportEvent::DataReceived(framed.into()))
         .await
@@ -742,7 +742,7 @@ async fn ik_rejected_recovers_via_xxfallback_and_repopulates_cache() {
     // but the responder will still force fallback (mirrors the case where
     // the server has just rotated and the client's cache is one connect
     // out of date).
-    use wacore::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
+    use wa_rs_core::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
     pm.process_command(DeviceCommand::SetServerCertChain(CachedServerCertChain {
         intermediate: CachedNoiseCert {
             key: [0xCC; 32],
@@ -806,7 +806,7 @@ async fn ik_with_stale_cache_invalidates_and_increments_counter() {
     //     panics, which we catch and surface as a transient channel close
     //     event)
     //   - the orchestrator increments the counter and clears the cache.
-    use wacore::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
+    use wa_rs_core::store::{CachedNoiseCert, CachedServerCertChain, DeviceCommand};
     let stale_pub = [0xDE; 32];
     pm.process_command(DeviceCommand::SetServerCertChain(CachedServerCertChain {
         intermediate: CachedNoiseCert {
@@ -848,7 +848,7 @@ async fn ik_with_stale_cache_invalidates_and_increments_counter() {
     };
     let mut sh_bytes = Vec::new();
     server_hello.encode(&mut sh_bytes).unwrap();
-    let framed = wacore::framing::encode_frame(&sh_bytes, None).unwrap();
+    let framed = wa_rs_core::framing::encode_frame(&sh_bytes, None).unwrap();
 
     let transport_for_task = transport.clone();
     let driver = tokio::spawn(async move {

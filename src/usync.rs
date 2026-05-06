@@ -1,12 +1,12 @@
 //! User device list synchronization.
 //!
-//! Device list IQ specification is defined in `wacore::iq::usync`.
+//! Device list IQ specification is defined in `wa_rs_core::iq::usync`.
 
 use crate::client::Client;
 use log::{debug, warn};
 use std::collections::HashSet;
-use wacore::iq::usync::DeviceListSpec;
-use wacore_binary::Jid;
+use wa_rs_core::iq::usync::DeviceListSpec;
+use wa_rs_binary::Jid;
 
 impl Client {
     pub(crate) async fn get_user_devices(&self, jids: &[Jid]) -> Result<Vec<Jid>, anyhow::Error> {
@@ -57,7 +57,7 @@ impl Client {
             }
 
             let mut fetched_devices = Vec::with_capacity(response.device_lists.len());
-            let mut device_records: Vec<wacore::store::traits::DeviceListRecord> =
+            let mut device_records: Vec<wa_rs_core::store::traits::DeviceListRecord> =
                 Vec::with_capacity(response.device_lists.len());
 
             for user_list in &response.device_lists {
@@ -82,7 +82,7 @@ impl Client {
                 let decoded_key_index = user_list
                     .key_index_bytes
                     .as_deref()
-                    .and_then(wacore::adv::decode_key_index_list);
+                    .and_then(wa_rs_core::adv::decode_key_index_list);
 
                 // Check raw_id mismatch for identity change detection
                 // TODO: also check advAccountType mismatch (see patch_device_add TODO)
@@ -115,10 +115,10 @@ impl Client {
                     raw_id = existing_record.as_ref().and_then(|r| r.raw_id);
                 }
 
-                let mut devices: Vec<wacore::store::traits::DeviceInfo> = user_list
+                let mut devices: Vec<wa_rs_core::store::traits::DeviceInfo> = user_list
                     .devices
                     .iter()
-                    .map(|d| wacore::store::traits::DeviceInfo {
+                    .map(|d| wa_rs_core::store::traits::DeviceInfo {
                         device_id: d.device as u32,
                         // Server-returned key_index takes priority over cached
                         key_index: d.key_index.or_else(|| {
@@ -132,7 +132,7 @@ impl Client {
 
                 // Apply valid_indexes filtering if key-index-list was decoded
                 if let Some(ref decoded) = decoded_key_index {
-                    devices = wacore::adv::filter_devices_by_key_index(&devices, decoded);
+                    devices = wa_rs_core::adv::filter_devices_by_key_index(&devices, decoded);
                 }
 
                 // Convert filtered DeviceInfo list back to JIDs for return
@@ -143,10 +143,10 @@ impl Client {
                     fetched_devices.push(jid);
                 }
 
-                device_records.push(wacore::store::traits::DeviceListRecord {
+                device_records.push(wa_rs_core::store::traits::DeviceListRecord {
                     user: user_list.user.user.to_string(),
                     devices,
-                    timestamp: wacore::time::now_secs(),
+                    timestamp: wa_rs_core::time::now_secs(),
                     phash: user_list.phash.clone(),
                     raw_id,
                 });
@@ -233,7 +233,7 @@ impl Client {
 mod tests {
     use super::*;
     use crate::test_utils::create_test_client;
-    use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+    use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
     #[tokio::test]
     async fn test_device_registry_hit_resolves_devices() {
@@ -254,7 +254,7 @@ mod tests {
                     key_index: Some(10),
                 },
             ],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -286,7 +286,7 @@ mod tests {
                     key_index: Some(25),
                 },
             ],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -312,7 +312,7 @@ mod tests {
                 device_id: 5,
                 key_index: None,
             }],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };

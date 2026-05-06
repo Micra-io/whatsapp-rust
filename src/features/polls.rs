@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 
 use anyhow::{Result, anyhow};
-use wacore::poll;
-use wacore_binary::{Jid, JidExt};
-use waproto::whatsapp as wa;
+use wa_rs_core::poll;
+use wa_rs_binary::{Jid, JidExt};
+use wa_rs_proto::whatsapp as wa;
 
 use crate::client::Client;
 use crate::send::SendResult;
@@ -155,7 +155,7 @@ impl<'a> Polls<'a> {
                 enc_iv: Some(iv.to_vec()),
             }),
             metadata: Some(wa::message::PollUpdateMessageMetadata {}),
-            sender_timestamp_ms: Some(wacore::time::now_millis()),
+            sender_timestamp_ms: Some(wa_rs_core::time::now_millis()),
         };
 
         let message = wa::Message {

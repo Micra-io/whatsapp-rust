@@ -15,9 +15,9 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 use thiserror::Error;
-use wacore::runtime::Runtime;
-use wacore::store::DevicePropsOverride;
-use waproto::whatsapp as wa;
+use wa_rs_core::runtime::Runtime;
+use wa_rs_core::store::DevicePropsOverride;
+use wa_rs_proto::whatsapp as wa;
 
 /// Typestate marker: a required builder field has not been provided yet.
 pub struct Missing;
@@ -68,7 +68,7 @@ impl MessageContext {
     }
 
     pub fn build_quote_context(&self) -> wa::ContextInfo {
-        wacore::proto_helpers::build_quote_context_with_info(
+        wa_rs_core::proto_helpers::build_quote_context_with_info(
             &self.info.id,
             &self.info.source.sender,
             &self.info.source.chat,
@@ -79,7 +79,7 @@ impl MessageContext {
     /// Referential [`wa::MessageKey`] for [`wa::message::ReactionMessage::key`].
     /// Sender-side revokes have a different shape; use [`Client::revoke_message`].
     pub fn message_key(&self) -> wa::MessageKey {
-        use wacore_binary::JidExt;
+        use wa_rs_binary::JidExt;
         let needs_participant =
             self.info.source.is_group || self.info.source.chat.is_status_broadcast();
         wa::MessageKey {
@@ -144,7 +144,7 @@ impl EventHandler for BotEventHandler {
 /// client's run loop to finish.
 pub struct BotHandle {
     done_rx: futures::channel::oneshot::Receiver<()>,
-    _abort_handle: wacore::runtime::AbortHandle,
+    _abort_handle: wa_rs_core::runtime::AbortHandle,
 }
 
 impl BotHandle {
@@ -350,7 +350,7 @@ impl<B, H, R> BotBuilder<B, Missing, H, R> {
     ///
     /// # Example
     /// ```rust,ignore
-    /// use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
+    /// use wa_rs_tokio_transport::TokioWebSocketTransportFactory;
     ///
     /// let bot = Bot::builder()
     ///     .with_backend(backend)
@@ -388,7 +388,7 @@ impl<B, T, R> BotBuilder<B, T, Missing, R> {
     ///
     /// # Example
     /// ```rust,ignore
-    /// use whatsapp_rust_ureq_http_client::UreqHttpClient;
+    /// use wa_rs_ureq_http::UreqHttpClient;
     ///
     /// let bot = Bot::builder()
     ///     .with_backend(backend)
@@ -501,8 +501,8 @@ impl<B, T, H, R> BotBuilder<B, T, H, R> {
     ///
     /// # Example
     /// ```rust,ignore
-    /// use waproto::whatsapp::device_props::PlatformType;
-    /// use wacore::store::DevicePropsOverride;
+    /// use wa_rs_proto::whatsapp::device_props::PlatformType;
+    /// use wa_rs_core::store::DevicePropsOverride;
     ///
     /// Bot::builder()
     ///     .with_backend(backend)
@@ -528,7 +528,7 @@ impl<B, T, H, R> BotBuilder<B, T, H, R> {
     ///
     /// # Example
     /// ```rust,ignore
-    /// use whatsapp_rust::pair_code::PairCodeOptions;
+    /// use wa_rs::pair_code::PairCodeOptions;
     ///
     /// // Platform identity is derived from `DeviceProps` configured via
     /// // `Bot::builder().with_device_props(...)`. Explicit overrides below
@@ -601,7 +601,7 @@ impl<B, T, H, R> BotBuilder<B, T, H, R> {
     ///
     /// # Example
     /// ```rust,ignore
-    /// use whatsapp_rust::{CacheConfig, CacheEntryConfig};
+    /// use wa_rs::{CacheConfig, CacheEntryConfig};
     ///
     /// // Disable TTL for group and device caches (good for bots with few groups)
     /// let bot = Bot::builder()
@@ -709,7 +709,7 @@ mod tests {
     use crate::TokioRuntime;
     use crate::http::{HttpClient, HttpRequest, HttpResponse};
     use crate::store::SqliteStore;
-    use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
+    use wa_rs_tokio_transport::TokioWebSocketTransportFactory;
 
     // Mock HTTP client for testing
     #[derive(Debug, Clone)]
@@ -920,7 +920,7 @@ mod tests {
         // Version should be the default since we didn't override it
         assert_eq!(
             device.device_props.version,
-            Some(wacore::store::Device::default_device_props_version())
+            Some(wa_rs_core::store::Device::default_device_props_version())
         );
     }
 
@@ -956,7 +956,7 @@ mod tests {
         // OS should be the default since we didn't override it
         assert_eq!(
             device.device_props.os,
-            Some(wacore::store::Device::default_os().to_string())
+            Some(wa_rs_core::store::Device::default_os().to_string())
         );
     }
 
@@ -991,11 +991,11 @@ mod tests {
         // OS and version should remain default
         assert_eq!(
             device.device_props.os,
-            Some(wacore::store::Device::default_os().to_string())
+            Some(wa_rs_core::store::Device::default_os().to_string())
         );
         assert_eq!(
             device.device_props.version,
-            Some(wacore::store::Device::default_device_props_version())
+            Some(wa_rs_core::store::Device::default_device_props_version())
         );
     }
 

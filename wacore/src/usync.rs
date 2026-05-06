@@ -1,15 +1,15 @@
 use anyhow::{Result, anyhow};
-use wacore_binary::Jid;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Node, NodeRef};
+use wa_rs_binary::Jid;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Node, NodeRef};
 
 /// A LID mapping learned from usync response
 #[derive(Debug, Clone)]
 pub struct UsyncLidMapping {
     /// The phone number user part (e.g., "559980000001")
-    pub phone_number: wacore_binary::CompactString,
+    pub phone_number: wa_rs_binary::CompactString,
     /// The LID user part (e.g., "100000012345678")
-    pub lid: wacore_binary::CompactString,
+    pub lid: wa_rs_binary::CompactString,
 }
 
 #[derive(Debug, Clone)]
@@ -81,7 +81,7 @@ pub fn parse_get_user_devices_response_with_phash(resp_node: &Node) -> Result<Ve
         let key_index_bytes = devices_parent
             .and_then(|dp| dp.get_optional_child("key-index-list"))
             .and_then(|ki| match &ki.content {
-                Some(wacore_binary::NodeContent::Bytes(b)) if !b.is_empty() => Some(b.clone()),
+                Some(wa_rs_binary::NodeContent::Bytes(b)) if !b.is_empty() => Some(b.clone()),
                 _ => None,
             });
 
@@ -170,7 +170,7 @@ pub fn parse_lid_mappings_from_response(resp_node: &NodeRef<'_>) -> Vec<UsyncLid
             Err(_) => continue,
         };
 
-        if user_jid.server != wacore_binary::Server::Pn {
+        if user_jid.server != wa_rs_binary::Server::Pn {
             continue;
         }
 
@@ -181,7 +181,7 @@ pub fn parse_lid_mappings_from_response(resp_node: &NodeRef<'_>) -> Vec<UsyncLid
             };
             if !lid_val.is_empty()
                 && let Ok(lid_jid) = lid_val.parse::<Jid>()
-                && lid_jid.server == wacore_binary::Server::Lid
+                && lid_jid.server == wa_rs_binary::Server::Lid
             {
                 mappings.push(UsyncLidMapping {
                     phone_number: user_jid.user.clone(),
@@ -197,7 +197,7 @@ pub fn parse_lid_mappings_from_response(resp_node: &NodeRef<'_>) -> Vec<UsyncLid
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     /// Helper to build a usync response node for testing.
     /// The structure matches actual server responses:
@@ -218,14 +218,14 @@ mod tests {
     fn build_test_key_index_bytes(device_ids: &[u16]) -> Vec<u8> {
         use prost::Message;
         let valid_indexes: Vec<u32> = device_ids.iter().map(|&id| id as u32).collect();
-        let key_index = waproto::whatsapp::AdvKeyIndexList {
+        let key_index = wa_rs_proto::whatsapp::AdvKeyIndexList {
             raw_id: Some(1),
             timestamp: Some(1000),
             current_index: Some(valid_indexes.iter().copied().max().unwrap_or(0)),
             valid_indexes,
             account_type: None,
         };
-        let signed = waproto::whatsapp::AdvSignedKeyIndexList {
+        let signed = wa_rs_proto::whatsapp::AdvSignedKeyIndexList {
             details: Some(key_index.encode_to_vec()),
             account_signature: None,
             account_signature_key: None,

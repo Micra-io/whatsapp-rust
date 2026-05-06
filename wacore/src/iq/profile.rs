@@ -14,7 +14,7 @@ use std::borrow::Cow;
 
 use crate::iq::spec::IqSpec;
 use crate::request::InfoQuery;
-use wacore_binary::{Jid, Node, NodeContent, NodeRef, Server};
+use wa_rs_binary::{Jid, Node, NodeContent, NodeRef, Server};
 
 /// IQ spec for setting the user's own status text (about).
 pub struct SetStatusTextSpec {

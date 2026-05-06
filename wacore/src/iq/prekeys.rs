@@ -43,10 +43,10 @@ use crate::prekeys::PreKeyUtils;
 use crate::protocol::ProtocolNode;
 use crate::request::InfoQuery;
 use anyhow::anyhow;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::encoder::{ByteWriter, EncodeNode, Encoder};
-use wacore_binary::{Jid, Server};
-use wacore_binary::{Node, NodeContent, NodeContentRef, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::encoder::{ByteWriter, EncodeNode, Encoder};
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{Node, NodeContent, NodeContentRef, NodeRef};
 
 // Re-export PreKeyBundle for convenience
 pub use crate::libsignal::protocol::{PreKeyBundle, PublicKey};
@@ -363,7 +363,7 @@ impl EncodeNode for PreKeyUploadIqNode<'_> {
     fn encode_attrs<'a, W: ByteWriter>(
         &self,
         encoder: &mut Encoder<'a, W>,
-    ) -> wacore_binary::Result<()> {
+    ) -> wa_rs_binary::Result<()> {
         // Attr order matches build_iq_node: id, xmlns, type, to
         encoder.write_string("id")?;
         encoder.write_string(self.request_id)?;
@@ -379,7 +379,7 @@ impl EncodeNode for PreKeyUploadIqNode<'_> {
     fn encode_content<'a, W: ByteWriter>(
         &self,
         encoder: &mut Encoder<'a, W>,
-    ) -> wacore_binary::Result<()> {
+    ) -> wa_rs_binary::Result<()> {
         let spec = self.spec;
 
         // 5 children: registration, type, identity, list, skey
@@ -1202,7 +1202,7 @@ mod tests {
         assert!(used);
 
         let iq = spec.build_iq();
-        let iq_node = wacore_binary::builder::NodeBuilder::new("iq")
+        let iq_node = wa_rs_binary::builder::NodeBuilder::new("iq")
             .attr("id", request_id)
             .attr("xmlns", iq.namespace)
             .attr("type", iq.query_type.as_str())
@@ -1210,7 +1210,7 @@ mod tests {
             .apply_content(iq.content)
             .build();
         let marshal_buf =
-            wacore_binary::marshal_auto(&iq_node).expect("marshal_auto should succeed");
+            wa_rs_binary::marshal_auto(&iq_node).expect("marshal_auto should succeed");
 
         assert_eq!(
             direct_buf, marshal_buf,

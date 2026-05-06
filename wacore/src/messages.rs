@@ -2,7 +2,7 @@ use crate::libsignal::crypto::CryptographicHash;
 use anyhow::{Result, anyhow};
 use base64::Engine as _;
 use prost::Message as ProtoMessage;
-use waproto::whatsapp as wa;
+use wa_rs_proto::whatsapp as wa;
 
 pub struct MessageUtils;
 
@@ -29,7 +29,7 @@ impl MessageUtils {
         buf
     }
 
-    pub fn participant_list_hash(devices: &[wacore_binary::Jid]) -> Result<String> {
+    pub fn participant_list_hash(devices: &[wa_rs_binary::Jid]) -> Result<String> {
         // Hash sorted ad_strings incrementally (avoids join() allocation).
         let mut jids: Vec<String> = devices.iter().map(|j| j.to_ad_string()).collect();
         jids.sort_unstable();
@@ -145,14 +145,14 @@ pub fn is_sender_key_distribution_only(msg: &wa::Message) -> bool {
 /// attributes. It requires the own JID and optional LID to determine
 /// `is_from_me`.
 pub fn parse_message_info(
-    node: &wacore_binary::NodeRef<'_>,
-    own_jid: &wacore_binary::Jid,
-    own_lid: Option<&wacore_binary::Jid>,
+    node: &wa_rs_binary::NodeRef<'_>,
+    own_jid: &wa_rs_binary::Jid,
+    own_lid: Option<&wa_rs_binary::Jid>,
 ) -> Result<crate::types::message::MessageInfo> {
     use crate::types::message::{
         AddressingMode, EditAttribute, MessageCategory, MessageInfo, MessageSource,
     };
-    use wacore_binary::{JidExt as _, STATUS_BROADCAST_USER, Server};
+    use wa_rs_binary::{JidExt as _, STATUS_BROADCAST_USER, Server};
 
     let mut attrs = node.attrs();
     let from = attrs.jid("from");
@@ -286,8 +286,8 @@ pub fn parse_message_info(
 mod parse_message_info_tests {
     use super::*;
     use std::str::FromStr;
-    use wacore_binary::Jid;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::Jid;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn status_broadcast_with_participant_lid_populates_sender_alt() {
@@ -308,14 +308,14 @@ mod parse_message_info_tests {
             .expect("parse_message_info should succeed for status broadcast");
 
         assert_eq!(info.source.sender.user, pn_user);
-        assert_eq!(info.source.sender.server, wacore_binary::Server::Pn);
+        assert_eq!(info.source.sender.server, wa_rs_binary::Server::Pn);
         let alt = info
             .source
             .sender_alt
             .as_ref()
             .expect("status broadcast must expose participant_lid as sender_alt");
         assert_eq!(alt.user, lid_user);
-        assert_eq!(alt.server, wacore_binary::Server::Lid);
+        assert_eq!(alt.server, wa_rs_binary::Server::Lid);
     }
 
     /// Symmetric branch: when `participant` is a LID, `sender_alt` must come
@@ -342,13 +342,13 @@ mod parse_message_info_tests {
             .expect("parse_message_info should succeed for LID-addressed status");
 
         assert_eq!(info.source.sender.user, lid_user);
-        assert_eq!(info.source.sender.server, wacore_binary::Server::Lid);
+        assert_eq!(info.source.sender.server, wa_rs_binary::Server::Lid);
         let alt = info
             .source
             .sender_alt
             .as_ref()
             .expect("LID-addressed status broadcast must expose participant_pn as sender_alt");
         assert_eq!(alt.user, pn_user);
-        assert_eq!(alt.server, wacore_binary::Server::Pn);
+        assert_eq!(alt.server, wa_rs_binary::Server::Pn);
     }
 }

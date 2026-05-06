@@ -4,13 +4,13 @@ use prost::Message;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 use std::sync::LazyLock;
-use wacore_binary::Jid;
-use waproto::whatsapp as wa;
+use wa_rs_binary::Jid;
+use wa_rs_proto::whatsapp as wa;
 
 /// Protobuf-bytes serde for `AdvSignedDeviceIdentity` (prost types lack `Deserialize`).
 pub mod account_serde {
     use prost::Message;
-    use waproto::whatsapp as wa;
+    use wa_rs_proto::whatsapp as wa;
 
     pub fn to_bytes(account: &wa::AdvSignedDeviceIdentity) -> Vec<u8> {
         account.encode_to_vec()
@@ -273,8 +273,8 @@ pub struct CachedServerCertChain {
     pub leaf: CachedNoiseCert,
 }
 
-impl From<wacore_noise::VerifiedServerCertChain> for CachedServerCertChain {
-    fn from(v: wacore_noise::VerifiedServerCertChain) -> Self {
+impl From<wa_rs_noise::VerifiedServerCertChain> for CachedServerCertChain {
+    fn from(v: wa_rs_noise::VerifiedServerCertChain) -> Self {
         Self {
             intermediate: CachedNoiseCert {
                 key: v.intermediate_key,

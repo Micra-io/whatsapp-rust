@@ -8,16 +8,16 @@ use iai_callgrind::{
 use prost::Message as ProtoMessage;
 use std::collections::HashMap;
 use std::hint::black_box;
-use wacore::client::context::{GroupInfo, SendContextResolver};
-use wacore::messages::MessageUtils;
-use wacore::runtime::{AbortHandle, Runtime};
-use wacore::send::{SignalStores, prepare_group_stanza, prepare_peer_stanza};
-use wacore::types::jid::{JidExt, make_sender_key_name};
-use wacore::types::message::AddressingMode;
-use wacore_binary::jid::Jid;
-use wacore_binary::marshal::marshal;
-use wacore_binary::node::{Node, NodeContent};
-use wacore_libsignal::protocol::{
+use wa_rs_core::client::context::{GroupInfo, SendContextResolver};
+use wa_rs_core::messages::MessageUtils;
+use wa_rs_core::runtime::{AbortHandle, Runtime};
+use wa_rs_core::send::{SignalStores, prepare_group_stanza, prepare_peer_stanza};
+use wa_rs_core::types::jid::{JidExt, make_sender_key_name};
+use wa_rs_core::types::message::AddressingMode;
+use wa_rs_binary::jid::Jid;
+use wa_rs_binary::marshal::marshal;
+use wa_rs_binary::node::{Node, NodeContent};
+use wa_rs_libsignal::protocol::{
     CiphertextMessage, Direction, GenericSignedPreKey, IdentityChange, IdentityKey,
     IdentityKeyPair, IdentityKeyStore, KeyPair, PreKeyBundle, PreKeyId, PreKeyRecord,
     PreKeySignalMessage, PreKeyStore, ProtocolAddress, SenderKeyRecord, SenderKeyStore,
@@ -26,10 +26,10 @@ use wacore_libsignal::protocol::{
     group_decrypt, message_decrypt, message_encrypt, process_prekey_bundle,
     process_sender_key_distribution_message,
 };
-use wacore_libsignal::store::sender_key_name::SenderKeyName;
-use waproto::whatsapp as wa;
+use wa_rs_libsignal::store::sender_key_name::SenderKeyName;
+use wa_rs_proto::whatsapp as wa;
 
-type SigResult<T> = wacore_libsignal::protocol::error::Result<T>;
+type SigResult<T> = wa_rs_libsignal::protocol::error::Result<T>;
 
 // ---------------------------------------------------------------------------
 // In-memory Signal stores
@@ -147,7 +147,7 @@ impl PreKeyStore for MemPreKeyStore {
         self.0
             .get(&id)
             .cloned()
-            .ok_or(wacore_libsignal::protocol::SignalProtocolError::InvalidPreKeyId)
+            .ok_or(wa_rs_libsignal::protocol::SignalProtocolError::InvalidPreKeyId)
     }
     async fn save_pre_key(&mut self, id: PreKeyId, r: &PreKeyRecord) -> SigResult<()> {
         self.0.insert(id, r.clone());
@@ -168,7 +168,7 @@ impl SignedPreKeyStore for MemSignedPreKeyStore {
         self.0
             .get(&id)
             .cloned()
-            .ok_or(wacore_libsignal::protocol::SignalProtocolError::InvalidSignedPreKeyId)
+            .ok_or(wa_rs_libsignal::protocol::SignalProtocolError::InvalidSignedPreKeyId)
     }
     async fn save_signed_pre_key(
         &mut self,
@@ -262,7 +262,7 @@ impl User {
 
         let jid = Jid::new(
             user,
-            wacore_binary::jid::Server::try_from(server)
+            wa_rs_binary::jid::Server::try_from(server)
                 .expect("invalid server in benchmark fixture"),
         );
         let address = jid.to_protocol_address();

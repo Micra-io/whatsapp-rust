@@ -1,9 +1,9 @@
 use crate::libsignal::protocol::{IdentityKey, PreKeyBundle, PreKeyId, PublicKey, SignedPreKeyId};
 use std::collections::HashMap;
-use wacore_binary::CompactString;
-use wacore_binary::Jid;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Node, NodeRef};
+use wa_rs_binary::CompactString;
+use wa_rs_binary::Jid;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Node, NodeRef};
 
 pub struct PreKeyUtils;
 
@@ -178,7 +178,7 @@ impl PreKeyUtils {
             if jid.device == 0
                 && matches!(
                     jid.server,
-                    wacore_binary::Server::Pn | wacore_binary::Server::Lid
+                    wa_rs_binary::Server::Pn | wa_rs_binary::Server::Lid
                 )
                 && let Some((user_base, device_str)) = jid.user.split_once(':')
                 && let Ok(device) = device_str.parse::<u16>()
@@ -204,7 +204,7 @@ impl PreKeyUtils {
         node: &NodeRef<'_>,
     ) -> Result<PreKeyBundle, anyhow::Error> {
         use crate::xml::DisplayableNodeRef;
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
 
         fn extract_bytes_ref(node: Option<&NodeRef<'_>>) -> Result<Vec<u8>, anyhow::Error> {
             match node.and_then(|n| n.content.as_deref()) {
@@ -274,7 +274,7 @@ impl PreKeyUtils {
     }
 
     fn node_to_pre_key_ref(node: &NodeRef<'_>) -> Result<Option<(u32, [u8; 32])>, anyhow::Error> {
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
 
         let id_content = node
             .get_optional_child("id")
@@ -326,7 +326,7 @@ impl PreKeyUtils {
     fn node_to_signed_pre_key_ref(
         node: &NodeRef<'_>,
     ) -> Result<(u32, [u8; 32], [u8; 64]), anyhow::Error> {
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
 
         let (id, public_key_bytes) = match Self::node_to_pre_key_ref(node)? {
             Some((id, key)) => (id, key),
@@ -360,7 +360,7 @@ mod tests {
     use crate::libsignal::protocol::{IdentityKeyPair, KeyPair};
     use crate::protocol::ProtocolNode;
 
-    use wacore_binary::NodeValue;
+    use wa_rs_binary::NodeValue;
 
     fn create_mock_bundle(device_id: u32) -> PreKeyBundle {
         let mut rng = rand::make_rng::<rand::rngs::StdRng>();
@@ -390,7 +390,7 @@ mod tests {
 
         let raw_jid = Jid {
             user: "100000012345678:33".into(),
-            server: wacore_binary::Server::Lid,
+            server: wa_rs_binary::Server::Lid,
             agent: 1,
             device: 0,
             integrator: 0,

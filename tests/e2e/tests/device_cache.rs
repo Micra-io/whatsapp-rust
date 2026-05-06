@@ -1,6 +1,6 @@
 use e2e_tests::{TestClient, text_msg};
 use log::info;
-use whatsapp_rust::features::{GroupCreateOptions, GroupParticipantOptions};
+use wa_rs::features::{GroupCreateOptions, GroupParticipantOptions};
 
 /// Verify that group messaging continues to work after a reconnect.
 ///
@@ -44,7 +44,7 @@ async fn test_group_send_uses_registry_cache_after_reconnect() -> anyhow::Result
 
     // Second send — exercises registry-based device resolution
     let text_2 = "after reconnect";
-    let t = wacore::time::Instant::now();
+    let t = wa_rs_core::time::Instant::now();
     client_a
         .client
         .send_message(group_jid.clone(), text_msg(text_2))

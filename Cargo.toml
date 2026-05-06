@@ -1,6 +1,6 @@
 
 [package]
-name = "whatsapp-rust"
+name = "wa-rs"
 version = "0.5.0"
 edition = "2024"
 authors = ["João Lucas <jlucaso@hotmail.com>"]
@@ -83,19 +83,19 @@ tokio = { version = "1.48.0", default-features = false }
 uuid = { version = "1", default-features = false }
 
 # Internal workspace crates
-wacore = { path = "./wacore", default-features = false, version = "0.5.0" }
-wacore-appstate = { path = "./wacore/appstate", default-features = false, version = "0.5.0" }
-wacore-binary = { path = "./wacore/binary", default-features = false, version = "0.5.0" }
-wacore-derive = { path = "./wacore/derive", version = "0.5.0" }
-wacore-libsignal = { path = "./wacore/libsignal", version = "0.5.0" }
-wacore-noise = { path = "./wacore/noise", version = "0.5.0" }
-waproto = { path = "./waproto", version = "0.5.0" }
+wa-rs-core = { path = "./wacore", default-features = false, version = "0.5.0" }
+wa-rs-appstate = { path = "./wacore/appstate", default-features = false, version = "0.5.0" }
+wa-rs-binary = { path = "./wacore/binary", default-features = false, version = "0.5.0" }
+wa-rs-derive = { path = "./wacore/derive", version = "0.5.0" }
+wa-rs-libsignal = { path = "./wacore/libsignal", version = "0.5.0" }
+wa-rs-noise = { path = "./wacore/noise", version = "0.5.0" }
+wa-rs-proto = { path = "./waproto", version = "0.5.0" }
 yoke = { version = "0.8", features = ["derive"] }
 
 [features]
-debug-diagnostics = ["wacore/debug-diagnostics"]
-debug-snapshots = ["wacore/debug-snapshots"]
-danger-skip-tls-verify = ["whatsapp-rust-tokio-transport?/danger-skip-tls-verify"]
+debug-diagnostics = ["wa-rs-core/debug-diagnostics"]
+debug-snapshots = ["wa-rs-core/debug-snapshots"]
+danger-skip-tls-verify = ["wa-rs-tokio-transport?/danger-skip-tls-verify"]
 default = [
     "moka-cache",
     "simd",
@@ -107,12 +107,12 @@ default = [
     "signal",
 ]
 moka-cache = ["dep:moka"]
-simd = ["wacore/simd"]
-ureq-client = ["dep:whatsapp-rust-ureq-http-client"]
-tokio-transport = ["dep:whatsapp-rust-tokio-transport"]
+simd = ["wa-rs-core/simd"]
+ureq-client = ["dep:wa-rs-ureq-http"]
+tokio-transport = ["dep:wa-rs-tokio-transport"]
 tokio-runtime = ["dep:tokio"]
 signal = ["tokio-runtime", "tokio/signal"]
-sqlite-storage = ["whatsapp-rust-sqlite-storage"]
+sqlite-storage = ["wa-rs-sqlite-storage"]
 tokio-native = ["tokio-runtime", "tokio/rt-multi-thread"]
 
 [dependencies]
@@ -138,16 +138,16 @@ serde = { workspace = true }
 serde_json = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt", "sync", "time"], optional = true }
-wacore = { workspace = true }
-wacore-binary = { workspace = true }
-waproto = { workspace = true }
-whatsapp-rust-sqlite-storage = { path = "./storages/sqlite-storage", version = "0.5.0", optional = true }
-whatsapp-rust-tokio-transport = { path = "./transports/tokio-transport", version = "0.5.0", optional = true }
-whatsapp-rust-ureq-http-client = { path = "./http_clients/ureq-client", version = "0.5.0", optional = true }
+wa-rs-core = { workspace = true }
+wa-rs-binary = { workspace = true }
+wa-rs-proto = { workspace = true }
+wa-rs-sqlite-storage = { path = "./storages/sqlite-storage", version = "0.5.0", optional = true }
+wa-rs-tokio-transport = { path = "./transports/tokio-transport", version = "0.5.0", optional = true }
+wa-rs-ureq-http = { path = "./http_clients/ureq-client", version = "0.5.0", optional = true }
 
 [dev-dependencies]
 uuid = { workspace = true, features = ["v4"] }
-wacore-noise = { path = "./wacore/noise", features = ["test-util"] }
+wa-rs-noise = { path = "./wacore/noise", features = ["test-util"] }
 
 [lints]
 workspace = true

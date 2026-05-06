@@ -9,15 +9,15 @@ use anyhow;
 use log;
 
 use std::sync::atomic::Ordering;
-use wacore::iq::prekeys::{
+use wa_rs_core::iq::prekeys::{
     DigestKeyBundleSpec, PreKeyCountSpec, PreKeyFetchReason, PreKeyFetchSpec, PreKeyUploadSpec,
 };
-use wacore::libsignal::protocol::{KeyPair, PreKeyBundle, PublicKey};
-use wacore::libsignal::store::record_helpers::new_pre_key_record;
-use wacore::store::commands::DeviceCommand;
-use wacore_binary::Jid;
+use wa_rs_core::libsignal::protocol::{KeyPair, PreKeyBundle, PublicKey};
+use wa_rs_core::libsignal::store::record_helpers::new_pre_key_record;
+use wa_rs_core::store::commands::DeviceCommand;
+use wa_rs_binary::Jid;
 
-pub use wacore::prekeys::PreKeyUtils;
+pub use wa_rs_core::prekeys::PreKeyUtils;
 
 /// Matches WA Web's UPLOAD_KEYS_COUNT from WAWebSignalStoreApi.
 const WANTED_PRE_KEY_COUNT: usize = 812;
@@ -371,7 +371,7 @@ impl Client {
                 log::warn!("digestKey: missing local prekey {}, skipping", prekey_id);
                 return Ok(());
             };
-            match wacore::prekeys::extract_prekey_public_key(record_bytes) {
+            match wa_rs_core::prekeys::extract_prekey_public_key(record_bytes) {
                 Some(pk) => prekey_pubkeys.push(pk),
                 None => {
                     log::warn!(
@@ -383,7 +383,7 @@ impl Client {
             }
         }
 
-        let local_hash = wacore::prekeys::compute_key_bundle_digest(
+        let local_hash = wa_rs_core::prekeys::compute_key_bundle_digest(
             identity_bytes,
             skey_pub_bytes,
             skey_sig_bytes,

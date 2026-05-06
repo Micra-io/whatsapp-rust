@@ -12,8 +12,8 @@
 
 use crate::WireEnum;
 use serde::Serialize;
-use wacore_binary::Jid;
-use wacore_binary::{Node, NodeRef};
+use wa_rs_binary::Jid;
+use wa_rs_binary::{Node, NodeRef};
 
 /// How a membership request was initiated.
 ///
@@ -261,7 +261,7 @@ impl GroupNotification {
 /// Only `Create`/`Link`/`Unlink` call `.to_owned()` because those variants store `raw: Node`.
 fn parse_action(node: &NodeRef<'_>) -> Option<GroupNotificationAction> {
     use GroupNotificationActionTag as T;
-    use wacore_binary::NodeContentRef;
+    use wa_rs_binary::NodeContentRef;
 
     // WA Web drops this child entirely; mirror that behavior.
     if node.tag.as_ref() == "missing_participant_identification" {
@@ -494,8 +494,8 @@ fn parse_request_method(node: &NodeRef<'_>) -> MembershipRequestMethod {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::Jid;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::Jid;
+    use wa_rs_binary::builder::NodeBuilder;
 
     fn group_jid() -> Jid {
         "120363012345678901@g.us".parse().unwrap()

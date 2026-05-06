@@ -1,7 +1,7 @@
 //! `companion_platform_id` + `companion_platform_display` emission.
 //! Encoding only.
 
-use waproto::whatsapp as wa;
+use wa_rs_proto::whatsapp as wa;
 
 /// Prefix `WAWebLinkDeviceQrcode` uses when iOS native-camera linking is on.
 /// Concatenate with `make_qr_data` output to get a scannable deep-link URL.

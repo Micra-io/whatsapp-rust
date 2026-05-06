@@ -2,7 +2,7 @@ use super::traits::StanzaHandler;
 use crate::client::Client;
 use async_trait::async_trait;
 use std::sync::Arc;
-use wacore_binary::OwnedNodeRef;
+use wa_rs_binary::OwnedNodeRef;
 
 /// Handler for `<success>` stanzas.
 #[derive(Default)]

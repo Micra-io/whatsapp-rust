@@ -1,7 +1,7 @@
 use crate::client::Client;
 use async_trait::async_trait;
 use std::sync::Arc;
-use wacore_binary::OwnedNodeRef;
+use wa_rs_binary::OwnedNodeRef;
 
 /// Trait for handling specific types of XML stanzas received from the WhatsApp server.
 ///

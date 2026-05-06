@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
-use wacore::runtime::Runtime;
+use wa_rs_core::runtime::Runtime;
 
 pub struct FlushScope {
     count: AtomicUsize,
@@ -74,7 +74,7 @@ impl FlushScope {
     /// Wait until every tracked task has finished or the timeout elapses.
     /// Emits a warn log on timeout with the number of leaked tasks.
     pub async fn flush(&self, rt: &dyn Runtime, timeout: Duration) {
-        use wacore::time::Instant;
+        use wa_rs_core::time::Instant;
 
         let deadline = Instant::now() + timeout;
         loop {
@@ -85,7 +85,7 @@ impl FlushScope {
 
             let remaining = deadline.saturating_duration_since(Instant::now());
             if remaining.is_zero()
-                || wacore::runtime::timeout(rt, remaining, listener)
+                || wa_rs_core::runtime::timeout(rt, remaining, listener)
                     .await
                     .is_err()
             {
@@ -120,7 +120,7 @@ impl Drop for DecrementOnDrop {
 mod tests {
     use super::*;
     use std::sync::atomic::AtomicBool;
-    use wacore::time::Instant;
+    use wa_rs_core::time::Instant;
 
     fn rt() -> Arc<dyn Runtime> {
         Arc::new(crate::runtime_impl::TokioRuntime)

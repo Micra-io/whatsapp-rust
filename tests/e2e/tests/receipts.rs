@@ -9,10 +9,10 @@
 use e2e_tests::{TestClient, text_msg};
 use log::info;
 use std::time::Duration;
-use wacore::types::events::Event;
-use wacore::types::presence::ReceiptType;
-use whatsapp_rust::features::{GroupCreateOptions, GroupParticipantOptions};
-use whatsapp_rust::{NodeFilter, SendOptions};
+use wa_rs_core::types::events::Event;
+use wa_rs_core::types::presence::ReceiptType;
+use wa_rs::features::{GroupCreateOptions, GroupParticipantOptions};
+use wa_rs::{NodeFilter, SendOptions};
 
 /// Both clients online: A sends message to B, A should receive a delivery receipt.
 #[tokio::test]
@@ -449,7 +449,7 @@ async fn test_disconnect_is_fast_with_no_pending_receipts() -> anyhow::Result<()
 
     let client = TestClient::connect("e2e_rcpt_cold_disconnect").await?;
 
-    let start = wacore::time::Instant::now();
+    let start = wa_rs_core::time::Instant::now();
     client.client.disconnect().await;
     let elapsed = start.elapsed();
 
@@ -488,7 +488,7 @@ async fn test_disconnect_is_fast_with_pending_receipts() -> anyhow::Result<()> {
         .wait_for_text(&format!("burst {}", N - 1), 15)
         .await?;
 
-    let start = wacore::time::Instant::now();
+    let start = wa_rs_core::time::Instant::now();
     client_b.client.disconnect().await;
     let elapsed = start.elapsed();
 

@@ -1,9 +1,9 @@
 //! Sender key tracking and message cache methods for Client.
 
 use anyhow::Result;
-use wacore::types::message::ChatMessageId;
-use wacore_binary::Jid;
-use waproto::whatsapp as wa;
+use wa_rs_core::types::message::ChatMessageId;
+use wa_rs_binary::Jid;
+use wa_rs_proto::whatsapp as wa;
 
 use super::Client;
 
@@ -110,8 +110,8 @@ impl Client {
             return;
         }
 
-        use wacore::libsignal::store::sender_key_name::SenderKeyName;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
+        use wa_rs_core::types::jid::JidExt;
         let snapshot = self.persistence_manager.get_device_snapshot().await;
         for own_jid in snapshot.lid.iter().chain(snapshot.pn.iter()) {
             let sk_name =

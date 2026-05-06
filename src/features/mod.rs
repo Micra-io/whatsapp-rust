@@ -53,6 +53,6 @@ pub use profile::{Profile, SetProfilePictureResponse};
 pub use status::{Status, StatusPrivacySetting, StatusSendOptions};
 
 pub use signal::Signal;
-pub use wacore::message_processing::EncType;
+pub use wa_rs_core::message_processing::EncType;
 
 pub use tctoken::TcToken;

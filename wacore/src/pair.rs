@@ -8,11 +8,11 @@ use hmac::{Hmac, Mac};
 use prost::Message;
 
 use sha2::Sha256;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, SERVER_JID};
-use wacore_binary::{Node, NodeRef};
-use waproto::whatsapp as wa;
-use waproto::whatsapp::AdvEncryptionType;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, SERVER_JID};
+use wa_rs_binary::{Node, NodeRef};
+use wa_rs_proto::whatsapp as wa;
+use wa_rs_proto::whatsapp::AdvEncryptionType;
 
 // Prefixes from whatsmeow/pair.go, crucial for signature verification
 const ADV_PREFIX_ACCOUNT_SIGNATURE: &[u8] = &[6, 0];
@@ -544,7 +544,7 @@ mod tests {
     #[test]
     fn auto_derive_from_device_props_round_trip() {
         use crate::companion_reg::companion_web_client_type_for_props;
-        use waproto::whatsapp as wa;
+        use wa_rs_proto::whatsapp as wa;
 
         let cases = [
             (wa::device_props::PlatformType::Chrome, "1"),
@@ -576,7 +576,7 @@ mod tests {
     #[test]
     fn auto_derive_default_device_props_yields_other_web_client_nine() {
         use crate::companion_reg::companion_web_client_type_for_props;
-        use waproto::whatsapp as wa;
+        use wa_rs_proto::whatsapp as wa;
 
         let state = dummy_device_state();
         let ct = companion_web_client_type_for_props(&wa::DeviceProps::default());
@@ -622,7 +622,7 @@ mod tests {
         is_hosted: bool,
     ) -> Vec<u8> {
         use prost::Message;
-        use waproto::whatsapp as wa;
+        use wa_rs_proto::whatsapp as wa;
 
         let mut rng = rand::make_rng::<rand::rngs::StdRng>();
         let account_kp = KeyPair::generate(&mut rng);

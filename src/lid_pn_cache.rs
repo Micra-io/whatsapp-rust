@@ -22,7 +22,7 @@ use std::sync::Arc;
 
 use crate::cache_config::{CacheConfig, CacheEntryConfig};
 use crate::cache_store::TypedCache;
-pub use wacore::types::{LearningSource, LidPnEntry};
+pub use wa_rs_core::types::{LearningSource, LidPnEntry};
 
 /// Namespaces used in the custom store.
 const NS_LID: &str = "lid_pn_by_lid";
@@ -62,7 +62,7 @@ impl LidPnCache {
     /// When `store` is `None`, both maps use in-process moka caches.
     pub fn with_config(
         config: &CacheEntryConfig,
-        store: Option<Arc<dyn wacore::store::CacheStore>>,
+        store: Option<Arc<dyn wa_rs_core::store::CacheStore>>,
     ) -> Self {
         match store {
             Some(s) => Self {
@@ -147,7 +147,7 @@ impl LidPnCache {
     /// This should be called during client initialization to populate
     /// the cache from the database.
     pub async fn warm_up(&self, entries: impl IntoIterator<Item = LidPnEntry>) {
-        let start = wacore::time::Instant::now();
+        let start = wa_rs_core::time::Instant::now();
         let mut count = 0;
 
         for entry in entries {

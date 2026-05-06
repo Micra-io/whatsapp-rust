@@ -6,9 +6,9 @@ use crate::request::InfoQuery;
 use anyhow::{Result, anyhow};
 use std::num::NonZeroU32;
 use typed_builder::TypedBuilder;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{Node, NodeContent, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{Node, NodeContent, NodeRef};
 
 // Re-export AddressingMode from types::message for convenience
 pub use crate::types::message::AddressingMode;
@@ -707,7 +707,7 @@ impl ProtocolNode for GroupInfoResponse {
     }
 
     fn try_from_node_ref(node: &NodeRef<'_>) -> Result<Self> {
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
         if node.tag != "group" {
             return Err(anyhow!("expected <group>, got <{}>", node.tag));
         }

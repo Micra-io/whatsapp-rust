@@ -5,7 +5,7 @@ use crate::client::Client;
 use async_trait::async_trait;
 use log::debug;
 use std::sync::Arc;
-use wacore::types::events::{Event, PresenceUpdate};
+use wa_rs_core::types::events::{Event, PresenceUpdate};
 
 /// Handler for `<presence>` stanzas.
 ///
@@ -23,7 +23,7 @@ impl StanzaHandler for PresenceHandler {
     async fn handle(
         &self,
         client: Arc<Client>,
-        node: Arc<wacore_binary::OwnedNodeRef>,
+        node: Arc<wa_rs_binary::OwnedNodeRef>,
         _cancelled: &mut bool,
     ) -> bool {
         let nr = node.get();
@@ -44,7 +44,7 @@ impl StanzaHandler for PresenceHandler {
             .get_attr("last")
             .map(|v| v.as_str())
             .and_then(|s| s.parse::<i64>().ok())
-            .and_then(wacore::time::from_secs);
+            .and_then(wa_rs_core::time::from_secs);
 
         debug!(
             target: "PresenceHandler",

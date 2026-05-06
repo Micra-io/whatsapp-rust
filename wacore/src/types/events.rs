@@ -8,10 +8,10 @@ use prost::Message;
 use serde::Serialize;
 use std::fmt;
 use std::sync::{Arc, OnceLock, RwLock};
-use wacore_binary::Node;
-use wacore_binary::OwnedNodeRef;
-use wacore_binary::{Jid, MessageId};
-use waproto::whatsapp as wa;
+use wa_rs_binary::Node;
+use wa_rs_binary::OwnedNodeRef;
+use wa_rs_binary::{Jid, MessageId};
+use wa_rs_proto::whatsapp as wa;
 
 /// A lazily-parsed history sync blob.
 ///
@@ -916,7 +916,7 @@ pub struct DeleteMessageForMeUpdate {
 mod tests {
     use super::*;
     use prost::Message;
-    use waproto::whatsapp as wa;
+    use wa_rs_proto::whatsapp as wa;
 
     /// Build a HistorySync proto with conversations and encode it.
     fn make_history_sync_bytes(conversations: Vec<wa::Conversation>) -> Vec<u8> {

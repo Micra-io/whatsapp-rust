@@ -10,7 +10,7 @@
 //! the handler.  If more parsing logic is added to the handler in the future,
 //! it should be extracted here as pure functions.
 
-use wacore_binary::Node;
+use wa_rs_binary::Node;
 
 /// Extract a notification timestamp from a node's `t` attribute.
 ///
@@ -48,7 +48,7 @@ pub fn parse_disappearing_mode(node: &Node) -> Option<(u32, u64)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn notification_timestamp_with_valid_t() {

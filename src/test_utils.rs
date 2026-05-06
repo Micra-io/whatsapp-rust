@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use crate::Client;
-use wacore_binary::{Node, OwnedNodeRef};
+use wa_rs_binary::{Node, OwnedNodeRef};
 
 /// Marshal a `Node` into an `Arc<OwnedNodeRef>` for use in tests.
 pub fn node_to_owned_ref(node: &Node) -> Arc<OwnedNodeRef> {
-    let bytes = wacore_binary::marshal::marshal(node).expect("marshal should succeed");
+    let bytes = wa_rs_binary::marshal::marshal(node).expect("marshal should succeed");
     // marshal() prepends a leading format byte; OwnedNodeRef::new expects raw protocol bytes
     {
         let mut bytes = bytes;
@@ -122,7 +122,7 @@ pub async fn create_test_client_with_failing_http(name: &str) -> Arc<Client> {
 }
 
 use std::sync::Mutex;
-use wacore::types::events::{Event, EventHandler};
+use wa_rs_core::types::events::{Event, EventHandler};
 
 #[derive(Default)]
 pub struct TestEventCollector {

@@ -29,7 +29,7 @@ use crate::webp;
 use crate::zip::ZipWriter;
 use anyhow::{Result, bail};
 use sha2::{Digest, Sha256};
-use waproto::whatsapp as wa;
+use wa_rs_proto::whatsapp as wa;
 
 #[non_exhaustive]
 pub struct StickerInput<'a> {

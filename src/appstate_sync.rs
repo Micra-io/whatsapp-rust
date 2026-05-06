@@ -1,6 +1,6 @@
-// Re-export everything from wacore::appstate_sync for backwards compatibility
-pub use wacore::appstate::Mutation;
-pub use wacore::appstate_sync::{AppStateProcessor, AppStateSyncDriver, AppStateSyncError};
+// Re-export everything from wa_rs_core::appstate_sync for backwards compatibility
+pub use wa_rs_core::appstate::Mutation;
+pub use wa_rs_core::appstate_sync::{AppStateProcessor, AppStateSyncDriver, AppStateSyncError};
 
 #[cfg(test)]
 mod tests {
@@ -10,19 +10,19 @@ mod tests {
     use prost::Message;
     use std::collections::HashMap;
     use std::sync::Arc;
-    use wacore::appstate::WAPATCH_INTEGRITY;
-    use wacore::appstate::hash::HashState;
-    use wacore::appstate::hash::generate_content_mac;
-    use wacore::appstate::keys::expand_app_state_keys;
-    use wacore::appstate::patch_decode::{PatchList, WAPatchName};
-    use wacore::appstate::processor::AppStateMutationMAC;
-    use wacore::libsignal::crypto::aes_256_cbc_encrypt_into;
-    use wacore::store::error::Result as StoreResult;
-    use wacore::store::traits::{
+    use wa_rs_core::appstate::WAPATCH_INTEGRITY;
+    use wa_rs_core::appstate::hash::HashState;
+    use wa_rs_core::appstate::hash::generate_content_mac;
+    use wa_rs_core::appstate::keys::expand_app_state_keys;
+    use wa_rs_core::appstate::patch_decode::{PatchList, WAPatchName};
+    use wa_rs_core::appstate::processor::AppStateMutationMAC;
+    use wa_rs_core::libsignal::crypto::aes_256_cbc_encrypt_into;
+    use wa_rs_core::store::error::Result as StoreResult;
+    use wa_rs_core::store::traits::{
         AppStateSyncKey, AppSyncStore, DeviceListRecord, DeviceStore, LidPnMappingEntry,
         ProtocolStore, SignalStore,
     };
-    use waproto::whatsapp as wa;
+    use wa_rs_proto::whatsapp as wa;
 
     type MockMacMap = Arc<Mutex<HashMap<(String, Vec<u8>), Vec<u8>>>>;
 
@@ -200,13 +200,13 @@ mod tests {
         async fn get_tc_token(
             &self,
             _: &str,
-        ) -> StoreResult<Option<wacore::store::traits::TcTokenEntry>> {
+        ) -> StoreResult<Option<wa_rs_core::store::traits::TcTokenEntry>> {
             Ok(None)
         }
         async fn put_tc_token(
             &self,
             _: &str,
-            _: &wacore::store::traits::TcTokenEntry,
+            _: &wa_rs_core::store::traits::TcTokenEntry,
         ) -> StoreResult<()> {
             Ok(())
         }
@@ -234,11 +234,11 @@ mod tests {
     #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
     #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
     impl DeviceStore for MockBackend {
-        async fn save(&self, _: &wacore::store::Device) -> StoreResult<()> {
+        async fn save(&self, _: &wa_rs_core::store::Device) -> StoreResult<()> {
             Ok(())
         }
-        async fn load(&self) -> StoreResult<Option<wacore::store::Device>> {
-            Ok(Some(wacore::store::Device::new()))
+        async fn load(&self) -> StoreResult<Option<wa_rs_core::store::Device>> {
+            Ok(Some(wa_rs_core::store::Device::new()))
         }
         async fn exists(&self) -> StoreResult<bool> {
             Ok(true)
@@ -252,7 +252,7 @@ mod tests {
         op: wa::syncd_mutation::SyncdOperation,
         index_mac: &[u8],
         plaintext: &[u8],
-        keys: &wacore::appstate::keys::ExpandedAppStateKeys,
+        keys: &wa_rs_core::appstate::keys::ExpandedAppStateKeys,
         key_id_bytes: &[u8],
     ) -> wa::SyncdMutation {
         let iv = vec![0u8; 16];

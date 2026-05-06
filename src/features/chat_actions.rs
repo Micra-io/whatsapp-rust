@@ -8,13 +8,13 @@ use crate::appstate_sync::Mutation;
 use crate::client::Client;
 use anyhow::Result;
 use log::debug;
-use wacore::appstate::patch_decode::WAPatchName;
-use wacore::types::events::{
+use wa_rs_core::appstate::patch_decode::WAPatchName;
+use wa_rs_core::types::events::{
     ArchiveUpdate, ContactUpdate, DeleteChatUpdate, DeleteMessageForMeUpdate, Event,
     MarkChatAsReadUpdate, MuteUpdate, PinUpdate, StarUpdate,
 };
-use wacore_binary::{Jid, JidExt};
-use waproto::whatsapp as wa;
+use wa_rs_binary::{Jid, JidExt};
+use wa_rs_proto::whatsapp as wa;
 
 /// WA Web uses `-1` for indefinite mute.
 const MUTE_INDEFINITE: i64 = -1;
@@ -57,7 +57,7 @@ pub fn message_key(
 
 /// Returns `true` if handled, `false` if unknown (so other handlers can try).
 pub(crate) fn dispatch_chat_mutation(
-    event_bus: &wacore::types::events::CoreEventBus,
+    event_bus: &wa_rs_core::types::events::CoreEventBus,
     m: &Mutation,
     full_sync: bool,
 ) -> bool {
@@ -88,7 +88,7 @@ pub(crate) fn dispatch_chat_mutation(
         .as_ref()
         .and_then(|v| v.timestamp)
         .unwrap_or(0);
-    let time = wacore::time::from_millis_or_now(ts);
+    let time = wa_rs_core::time::from_millis_or_now(ts);
     let jid: Jid = if m.index.len() > 1 {
         match m.index[1].parse() {
             Ok(j) => j,
@@ -334,7 +334,7 @@ impl<'a> ChatActions<'a> {
                 "mute_end_timestamp_ms must be a positive future timestamp (use mute_chat() for indefinite)"
             );
         }
-        let now_ms = wacore::time::now_millis();
+        let now_ms = wa_rs_core::time::now_millis();
         if mute_end_timestamp_ms <= now_ms {
             anyhow::bail!(
                 "mute_end_timestamp_ms is in the past ({mute_end_timestamp_ms} <= {now_ms})"
@@ -392,7 +392,7 @@ impl<'a> ChatActions<'a> {
                 read: Some(read),
                 message_range,
             }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
         self.send_mutation(WAPatchName::RegularLow, &index, &value)
@@ -410,7 +410,7 @@ impl<'a> ChatActions<'a> {
         let index = serde_json::to_vec(&["deleteChat", &jid.to_string(), delete_media_str])?;
         let value = wa::SyncActionValue {
             delete_chat_action: Some(wa::sync_action_value::DeleteChatAction { message_range }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
         self.send_mutation(WAPatchName::RegularHigh, &index, &value)
@@ -441,7 +441,7 @@ impl<'a> ChatActions<'a> {
                 delete_media: Some(delete_media),
                 message_timestamp,
             }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
         self.send_mutation(WAPatchName::RegularHigh, &index, &value)
@@ -460,7 +460,7 @@ impl<'a> ChatActions<'a> {
                 archived: Some(archived),
                 message_range,
             }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
         self.send_mutation(WAPatchName::RegularLow, &index, &value)
@@ -473,7 +473,7 @@ impl<'a> ChatActions<'a> {
             pin_action: Some(wa::sync_action_value::PinAction {
                 pinned: Some(pinned),
             }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
         self.send_mutation(WAPatchName::RegularLow, &index, &value)
@@ -499,7 +499,7 @@ impl<'a> ChatActions<'a> {
                 mute_end_timestamp: mute_end,
                 ..Default::default()
             }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
         self.send_mutation(WAPatchName::RegularHigh, &index, &value)
@@ -520,7 +520,7 @@ impl<'a> ChatActions<'a> {
             star_action: Some(wa::sync_action_value::StarAction {
                 starred: Some(starred),
             }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
         self.send_mutation(WAPatchName::RegularHigh, &index, &value)
@@ -534,7 +534,7 @@ impl<'a> ChatActions<'a> {
         value: &wa::SyncActionValue,
     ) -> Result<()> {
         use rand::Rng;
-        use wacore::appstate::encode::encode_record;
+        use wa_rs_core::appstate::encode::encode_record;
 
         let proc = self.client.get_app_state_processor().await;
         let key_id = proc

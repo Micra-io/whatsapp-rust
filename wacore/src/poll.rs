@@ -66,7 +66,7 @@ pub fn encrypt_poll_vote(
     use prost::Message;
     use rand::Rng;
 
-    let vote_msg = waproto::whatsapp::message::PollVoteMessage {
+    let vote_msg = wa_rs_proto::whatsapp::message::PollVoteMessage {
         selected_options: selected_option_hashes.to_vec(),
     };
 
@@ -112,7 +112,7 @@ pub fn decrypt_poll_vote(
     aes_256_gcm_decrypt(encryption_key, nonce, &aad, enc_payload, &mut plaintext)
         .map_err(|_| anyhow!("Poll vote GCM tag verification failed"))?;
 
-    let vote_msg = waproto::whatsapp::message::PollVoteMessage::decode(&plaintext[..])?;
+    let vote_msg = wa_rs_proto::whatsapp::message::PollVoteMessage::decode(&plaintext[..])?;
     Ok(vote_msg.selected_options)
 }
 

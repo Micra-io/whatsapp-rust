@@ -1,6 +1,6 @@
 //! Runtime-agnostic persistence manager for device state.
 //!
-//! This is the core implementation that works with `wacore::store::Device` directly.
+//! This is the core implementation that works with `wa_rs_core::store::Device` directly.
 //! The `whatsapp-rust` crate has its own `PersistenceManager` in
 //! `src/store/persistence_manager.rs` that wraps a `Device` with an attached
 //! `Backend` reference. That version should eventually be consolidated into this

@@ -3,15 +3,15 @@ use crate::types::events::{Event, Receipt};
 use crate::types::presence::ReceiptType;
 use log::debug;
 use std::sync::Arc;
-use wacore::types::message::MessageCategory;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, JidExt as _};
+use wa_rs_core::types::message::MessageCategory;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, JidExt as _};
 
-use wacore_binary::OwnedNodeRef;
+use wa_rs_binary::OwnedNodeRef;
 
 impl Client {
     fn should_send_delivery_receipt(info: &crate::types::message::MessageInfo) -> bool {
-        use wacore_binary::STATUS_BROADCAST_USER;
+        use wa_rs_binary::STATUS_BROADCAST_USER;
 
         if info.id.is_empty()
             || info.source.chat.user == STATUS_BROADCAST_USER
@@ -60,7 +60,7 @@ impl Client {
                 sender,
                 ..Default::default()
             },
-            timestamp: wacore::time::now_utc(),
+            timestamp: wa_rs_core::time::now_utc(),
             r#type: receipt_type,
         };
 
@@ -169,7 +169,7 @@ impl Client {
             return Ok(());
         }
 
-        let timestamp = (wacore::time::now_secs() as u64).to_string();
+        let timestamp = (wa_rs_core::time::now_secs() as u64).to_string();
 
         let mut builder = NodeBuilder::new("receipt")
             .attr("to", chat)
@@ -183,7 +183,7 @@ impl Client {
 
         // Additional message IDs go into <list><item id="..."/></list>
         if message_ids.len() > 1 {
-            let items: Vec<wacore_binary::Node> = message_ids[1..]
+            let items: Vec<wa_rs_binary::Node> = message_ids[1..]
                 .iter()
                 .map(|id| NodeBuilder::new("item").attr("id", id).build())
                 .collect();
@@ -207,7 +207,7 @@ mod tests {
     use crate::test_utils::{MockHttpClient, TestEventCollector};
     use crate::types::message::{MessageInfo, MessageSource};
 
-    fn node_to_arc(node: wacore_binary::Node) -> Arc<OwnedNodeRef> {
+    fn node_to_arc(node: wa_rs_binary::Node) -> Arc<OwnedNodeRef> {
         crate::test_utils::node_to_owned_ref(&node)
     }
 
@@ -590,7 +590,7 @@ mod tests {
     /// ensuring the NodeValue::Jid optimization is not accidentally regressed to to_string.
     #[test]
     fn test_receipt_node_uses_jid_attrs() {
-        use wacore_binary::NodeValue;
+        use wa_rs_binary::NodeValue;
 
         let chat_jid: Jid = "120363021033254949@g.us"
             .parse()

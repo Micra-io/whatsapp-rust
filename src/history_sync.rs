@@ -1,8 +1,8 @@
 use crate::types::events::{Event, LazyHistorySync};
 use std::sync::Arc;
-use wacore::history_sync::{TcTokenCandidate, process_history_sync};
-use wacore::store::traits::TcTokenEntry;
-use waproto::whatsapp::message::HistorySyncNotification;
+use wa_rs_core::history_sync::{TcTokenCandidate, process_history_sync};
+use wa_rs_core::store::traits::TcTokenEntry;
+use wa_rs_proto::whatsapp::message::HistorySyncNotification;
 
 use crate::client::Client;
 
@@ -205,7 +205,7 @@ impl Client {
                     );
                     self.persistence_manager
                         .process_command(
-                            wacore::store::commands::DeviceCommand::SetNctSaltFromHistorySync(salt),
+                            wa_rs_core::store::commands::DeviceCommand::SetNctSaltFromHistorySync(salt),
                         )
                         .await;
                 }
@@ -242,7 +242,7 @@ impl Client {
 
     /// Store a tctoken candidate extracted during history sync streaming.
     async fn store_tc_token_candidate(&self, candidate: TcTokenCandidate) {
-        let jid: wacore_binary::Jid = match candidate.id.parse() {
+        let jid: wa_rs_binary::Jid = match candidate.id.parse() {
             Ok(j) => j,
             Err(_) => return,
         };

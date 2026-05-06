@@ -1,5 +1,5 @@
 [package]
-name = "wacore-derive"
+name = "wa-rs-derive"
 version = "0.5.0"
 edition = "2024"
 authors = ["João Lucas <jlucaso@hotmail.com>"]

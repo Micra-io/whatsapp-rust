@@ -25,7 +25,7 @@ impl StanzaHandler for MessageHandler {
     async fn handle(
         &self,
         client: Arc<Client>,
-        node: Arc<wacore_binary::OwnedNodeRef>,
+        node: Arc<wa_rs_binary::OwnedNodeRef>,
         cancelled: &mut bool,
     ) -> bool {
         let chat_jid = match node.attrs().optional_jid("from") {
@@ -61,7 +61,7 @@ impl StanzaHandler for MessageHandler {
 /// Construct a ChatLane with a spawned worker task. Extracted to keep the
 /// init closure passed to `get_with_by_ref` small.
 fn create_chat_lane(client: &Arc<Client>) -> ChatLane {
-    let (tx, rx) = async_channel::unbounded::<Arc<wacore_binary::OwnedNodeRef>>();
+    let (tx, rx) = async_channel::unbounded::<Arc<wa_rs_binary::OwnedNodeRef>>();
 
     let client_for_worker = client.clone();
     let spawn_generation = client
@@ -80,7 +80,7 @@ fn create_chat_lane(client: &Arc<Client>) -> ChatLane {
                     log::debug!(target: "MessageQueue", "Stale worker exiting; remaining messages will be redelivered by server");
                     break;
                 }
-                let start = wacore::time::Instant::now();
+                let start = wa_rs_core::time::Instant::now();
                 let client = client_for_worker.clone();
                 Box::pin(client.handle_incoming_message(msg_node)).await;
                 let elapsed = start.elapsed();

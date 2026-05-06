@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use wacore::net::{HttpClient, HttpRequest};
-use wacore::store::InMemoryBackend;
-use wacore::store::traits::TcTokenEntry;
-use wacore::types::events::{ChannelEventHandler, Event};
-use wacore_binary::node::Node;
-use whatsapp_rust::Jid;
-use whatsapp_rust::bot::Bot;
-use whatsapp_rust::store::traits::Backend;
-use whatsapp_rust::waproto::whatsapp as wa;
-use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
-use whatsapp_rust_ureq_http_client::UreqHttpClient;
+use wa_rs_core::net::{HttpClient, HttpRequest};
+use wa_rs_core::store::InMemoryBackend;
+use wa_rs_core::store::traits::TcTokenEntry;
+use wa_rs_core::types::events::{ChannelEventHandler, Event};
+use wa_rs_binary::node::Node;
+use wa_rs::Jid;
+use wa_rs::bot::Bot;
+use wa_rs::store::traits::Backend;
+use wa_rs::wa_rs_proto::whatsapp as wa;
+use wa_rs_tokio_transport::TokioWebSocketTransportFactory;
+use wa_rs_ureq_http::UreqHttpClient;
 
 /// Returns the mock server WebSocket URL from env, or the default.
 pub fn mock_server_url() -> String {
@@ -90,9 +90,9 @@ pub fn scenario_push_name(prefix: &str, flags: &[&str]) -> String {
 
 /// A connected client ready for testing, with its event receiver and run handle.
 pub struct TestClient {
-    pub client: Arc<whatsapp_rust::client::Client>,
+    pub client: Arc<wa_rs::client::Client>,
     pub event_rx: async_channel::Receiver<Arc<Event>>,
-    pub run_handle: whatsapp_rust::bot::BotHandle,
+    pub run_handle: wa_rs::bot::BotHandle,
 }
 
 impl TestClient {
@@ -127,7 +127,7 @@ impl TestClient {
             .with_backend(backend)
             .with_transport_factory(transport_factory)
             .with_http_client(UreqHttpClient::new())
-            .with_runtime(whatsapp_rust::TokioRuntime)
+            .with_runtime(wa_rs::TokioRuntime)
             .with_version((2, 3000, 0));
 
         if let Some(name) = push_name {
@@ -312,12 +312,12 @@ impl TestClient {
         msg_id: &str,
     ) -> futures::channel::oneshot::Receiver<Arc<Node>> {
         self.client
-            .wait_for_sent_node(whatsapp_rust::NodeFilter::tag("message").attr("id", msg_id))
+            .wait_for_sent_node(wa_rs::NodeFilter::tag("message").attr("id", msg_id))
     }
 
     pub fn next_sent_message_waiter(&self) -> futures::channel::oneshot::Receiver<Arc<Node>> {
         self.client
-            .wait_for_sent_node(whatsapp_rust::NodeFilter::tag("message"))
+            .wait_for_sent_node(wa_rs::NodeFilter::tag("message"))
     }
 
     pub async fn nct_salt(&self) -> Option<Vec<u8>> {
@@ -495,7 +495,7 @@ pub fn text_msg(text: &str) -> wa::Message {
 
 /// Send a text message and wait for the receiver to get it. Returns the message ID.
 pub async fn send_and_expect_text(
-    sender: &whatsapp_rust::client::Client,
+    sender: &wa_rs::client::Client,
     receiver: &mut TestClient,
     to: &Jid,
     text: &str,

@@ -3,7 +3,7 @@ use crate::client::Client;
 use async_trait::async_trait;
 use log::{debug, warn};
 use std::sync::Arc;
-use wacore::xml::DisplayableNodeRef;
+use wa_rs_core::xml::DisplayableNodeRef;
 
 /// Handler for `<iq>` (Info/Query) stanzas.
 ///
@@ -25,7 +25,7 @@ impl StanzaHandler for IqHandler {
     async fn handle(
         &self,
         client: Arc<Client>,
-        node: Arc<wacore_binary::OwnedNodeRef>,
+        node: Arc<wa_rs_binary::OwnedNodeRef>,
         _cancelled: &mut bool,
     ) -> bool {
         let nr = node.get();

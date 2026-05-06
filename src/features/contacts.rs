@@ -1,20 +1,20 @@
 //! Contact information feature.
 //!
-//! Profile picture types are defined in `wacore::iq::contacts`.
-//! Usync types are defined in `wacore::iq::usync`.
+//! Profile picture types are defined in `wa_rs_core::iq::contacts`.
+//! Usync types are defined in `wa_rs_core::iq::usync`.
 
 use crate::client::Client;
 use crate::request::IqError;
 use anyhow::Result;
 use log::debug;
 use std::collections::HashMap;
-use wacore::iq::contacts::{ProfilePictureSpec, ProfilePictureType};
-use wacore::iq::usync::{IsOnWhatsAppQueryType, IsOnWhatsAppSpec, IsOnWhatsAppUser, UserInfoSpec};
-use wacore_binary::{Jid, JidExt};
+use wa_rs_core::iq::contacts::{ProfilePictureSpec, ProfilePictureType};
+use wa_rs_core::iq::usync::{IsOnWhatsAppQueryType, IsOnWhatsAppSpec, IsOnWhatsAppUser, UserInfoSpec};
+use wa_rs_binary::{Jid, JidExt};
 
-// Re-export types from wacore
-pub use wacore::iq::contacts::ProfilePicture;
-pub use wacore::iq::usync::{IsOnWhatsAppResult, UserInfo};
+// Re-export types from wa_rs_core
+pub use wa_rs_core::iq::contacts::ProfilePicture;
+pub use wa_rs_core::iq::usync::{IsOnWhatsAppResult, UserInfo};
 
 pub struct Contacts<'a> {
     client: &'a Client,
@@ -150,7 +150,7 @@ impl<'a> Contacts<'a> {
                 .client
                 .ab_props
                 .is_enabled_or(
-                    wacore::iq::props::config_codes::PROFILE_PIC_PRIVACY_TOKEN,
+                    wa_rs_core::iq::props::config_codes::PROFILE_PIC_PRIVACY_TOKEN,
                     true,
                 )
                 .await

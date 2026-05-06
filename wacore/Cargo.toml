@@ -1,5 +1,5 @@
 [package]
-name = "wacore"
+name = "wa-rs-core"
 version = "0.5.0"
 edition = "2024"
 authors = ["João Lucas <jlucaso@hotmail.com>"]
@@ -9,7 +9,7 @@ description = "Core WhatsApp protocol implementation without runtime dependencie
 
 [features]
 default = ["simd"]
-simd = ["wacore-appstate/simd"]
+simd = ["wa-rs-appstate/simd"]
 debug-diagnostics = []
 debug-snapshots = []
 # Enable JS-based random number generation for wasm32 targets.
@@ -46,12 +46,12 @@ sha1 = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 typed-builder = "0.23"
-wacore-appstate = { workspace = true }
-wacore-binary = { workspace = true, features = ["serde"] }
-wacore-derive = { workspace = true }
-wacore-libsignal = { workspace = true }
-wacore-noise = { workspace = true }
-waproto = { workspace = true }
+wa-rs-appstate = { workspace = true }
+wa-rs-binary = { workspace = true, features = ["serde"] }
+wa-rs-derive = { workspace = true }
+wa-rs-libsignal = { workspace = true }
+wa-rs-noise = { workspace = true }
+wa-rs-proto = { workspace = true }
 
 [dev-dependencies]
 aes-gcm = { workspace = true }

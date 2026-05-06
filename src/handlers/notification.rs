@@ -5,18 +5,18 @@ use crate::types::events::Event;
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use std::sync::Arc;
-use wacore::stanza::business::BusinessNotification;
-use wacore::stanza::devices::DeviceNotification;
-use wacore::stanza::groups::{GroupNotification, GroupNotificationAction};
-use wacore::store::traits::{DeviceInfo, DeviceListRecord};
-use wacore::types::events::{
+use wa_rs_core::stanza::business::BusinessNotification;
+use wa_rs_core::stanza::devices::DeviceNotification;
+use wa_rs_core::stanza::groups::{GroupNotification, GroupNotificationAction};
+use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
+use wa_rs_core::types::events::{
     BusinessStatusUpdate, BusinessUpdateType, ContactNumberChanged, ContactSyncRequested,
     ContactUpdated, DeviceListUpdate, DeviceNotificationInfo, GroupUpdate, MexNotification,
     PictureUpdate, UserAboutUpdate,
 };
-use wacore_binary::NodeContentRef;
-use wacore_binary::{Jid, JidExt};
-use wacore_binary::{NodeRef, OwnedNodeRef};
+use wa_rs_binary::NodeContentRef;
+use wa_rs_binary::{Jid, JidExt};
+use wa_rs_binary::{NodeRef, OwnedNodeRef};
 
 /// Handler for `<notification>` stanzas.
 ///
@@ -38,7 +38,7 @@ impl StanzaHandler for NotificationHandler {
     async fn handle(
         &self,
         client: Arc<Client>,
-        node: Arc<wacore_binary::OwnedNodeRef>,
+        node: Arc<wa_rs_binary::OwnedNodeRef>,
         _cancelled: &mut bool,
     ) -> bool {
         handle_notification_impl(&client, node).await;
@@ -85,12 +85,12 @@ async fn handle_notification_impl(client: &Arc<Client>, node: Arc<OwnedNodeRef>)
     }
 }
 
-async fn handle_encrypt_notification(client: &Arc<Client>, nr: &wacore_binary::NodeRef<'_>) {
+async fn handle_encrypt_notification(client: &Arc<Client>, nr: &wa_rs_binary::NodeRef<'_>) {
     if nr.get_optional_child("identity").is_some() {
         handle_identity_change(client, nr).await;
     } else if nr
         .get_attr("from")
-        .is_some_and(|v| v.as_str() == wacore_binary::SERVER_JID)
+        .is_some_and(|v| v.as_str() == wa_rs_binary::SERVER_JID)
     {
         let first_child_tag = nr
             .children()
@@ -105,9 +105,9 @@ async fn handle_encrypt_notification(client: &Arc<Client>, nr: &wacore_binary::N
 
 /// Sync is fire-and-forget (spawned), so this is not async -- it parses
 /// collection nodes synchronously and spawns the async sync task.
-fn handle_server_sync_notification(client: &Arc<Client>, nr: &wacore_binary::NodeRef<'_>) {
+fn handle_server_sync_notification(client: &Arc<Client>, nr: &wa_rs_binary::NodeRef<'_>) {
     use std::str::FromStr;
-    use wacore::appstate::patch_decode::WAPatchName;
+    use wa_rs_core::appstate::patch_decode::WAPatchName;
 
     let mut collections = Vec::new();
     if let Some(children) = nr.children() {
@@ -198,7 +198,7 @@ fn handle_server_sync_notification(client: &Arc<Client>, nr: &wacore_binary::Nod
     }
 }
 
-async fn handle_account_sync_notification(client: &Arc<Client>, nr: &wacore_binary::NodeRef<'_>) {
+async fn handle_account_sync_notification(client: &Arc<Client>, nr: &wa_rs_binary::NodeRef<'_>) {
     if let Some(new_push_name) = nr.attrs().optional_string("pushname") {
         client
             .clone()
@@ -337,8 +337,8 @@ async fn handle_identity_change(client: &Arc<Client>, node: &NodeRef<'_>) {
     // and rotate status sender key for forward secrecy (clear_device_record only
     // cleared device tracking, not the key itself). Single flush covers both.
     {
-        use wacore::libsignal::store::sender_key_name::SenderKeyName;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
+        use wa_rs_core::types::jid::JidExt;
 
         let resolved = client.resolve_encryption_jid(&from_jid).await;
         let addr = resolved.to_protocol_address();
@@ -431,21 +431,21 @@ async fn handle_devices_notification(client: &Arc<Client>, node: &NodeRef<'_>) {
     );
 
     match op.operation_type {
-        wacore::stanza::devices::DeviceNotificationType::Add => {
+        wa_rs_core::stanza::devices::DeviceNotificationType::Add => {
             for device in &op.devices {
                 client
                     .patch_device_add(notification.user(), device, op.key_index.as_ref())
                     .await;
             }
         }
-        wacore::stanza::devices::DeviceNotificationType::Remove => {
+        wa_rs_core::stanza::devices::DeviceNotificationType::Remove => {
             for device in &op.devices {
                 client
                     .patch_device_remove(notification.user(), device.device_id())
                     .await;
             }
         }
-        wacore::stanza::devices::DeviceNotificationType::Update => {
+        wa_rs_core::stanza::devices::DeviceNotificationType::Update => {
             if op.devices.is_empty() {
                 // Hash-only update without device list — fall back to
                 // invalidation so the next read rehydrates from the server.
@@ -573,7 +573,7 @@ async fn handle_account_sync_devices(
         .attrs()
         .optional_u64("t")
         .map(|v| v as i64)
-        .unwrap_or_else(wacore::time::now_secs);
+        .unwrap_or_else(wa_rs_core::time::now_secs);
 
     // Preserve existing raw_id so account_sync doesn't erase it
     let existing_raw_id = client
@@ -638,8 +638,8 @@ async fn handle_account_sync_devices(
 /// </notification>
 /// ```
 async fn handle_privacy_token_notification(client: &Arc<Client>, node: &NodeRef<'_>) {
-    use wacore::iq::tctoken::parse_privacy_token_notification;
-    use wacore::store::traits::TcTokenEntry;
+    use wa_rs_core::iq::tctoken::parse_privacy_token_notification;
+    use wa_rs_core::store::traits::TcTokenEntry;
 
     let from_jid = node.attrs().optional_jid("from");
 
@@ -798,7 +798,7 @@ async fn handle_business_notification(client: &Arc<Client>, node: &NodeRef<'_>) 
     let event = Event::BusinessStatusUpdate(BusinessStatusUpdate {
         jid: notification.from.clone(),
         update_type,
-        timestamp: wacore::time::from_secs_or_now(notification.timestamp),
+        timestamp: wa_rs_core::time::from_secs_or_now(notification.timestamp),
         target_jid: notification.jid.clone(),
         hash: notification.hash.clone(),
         verified_name,
@@ -808,16 +808,16 @@ async fn handle_business_notification(client: &Arc<Client>, node: &NodeRef<'_>) 
     });
 
     match notification.notification_type {
-        wacore::stanza::business::BusinessNotificationType::RemoveJid
-        | wacore::stanza::business::BusinessNotificationType::RemoveHash => {
+        wa_rs_core::stanza::business::BusinessNotificationType::RemoveJid
+        | wa_rs_core::stanza::business::BusinessNotificationType::RemoveHash => {
             info!(
                 target: "Client/Business",
                 "Contact {} is no longer a business account",
                 notification.from
             );
         }
-        wacore::stanza::business::BusinessNotificationType::VerifiedNameJid
-        | wacore::stanza::business::BusinessNotificationType::VerifiedNameHash => {
+        wa_rs_core::stanza::business::BusinessNotificationType::VerifiedNameJid
+        | wa_rs_core::stanza::business::BusinessNotificationType::VerifiedNameHash => {
             if let Some(name) = &notification
                 .verified_name
                 .as_ref()
@@ -831,8 +831,8 @@ async fn handle_business_notification(client: &Arc<Client>, node: &NodeRef<'_>) 
                 );
             }
         }
-        wacore::stanza::business::BusinessNotificationType::Profile
-        | wacore::stanza::business::BusinessNotificationType::ProfileHash => {
+        wa_rs_core::stanza::business::BusinessNotificationType::Profile
+        | wa_rs_core::stanza::business::BusinessNotificationType::ProfileHash => {
             debug!(
                 target: "Client/Business",
                 "Contact {} business profile updated (hash: {:?})",
@@ -990,8 +990,8 @@ fn notification_timestamp(node: &NodeRef<'_>) -> chrono::DateTime<chrono::Utc> {
     node.attrs()
         .optional_u64("t")
         .and_then(|t| i64::try_from(t).ok())
-        .and_then(wacore::time::from_secs)
-        .unwrap_or_else(wacore::time::now_utc)
+        .and_then(wa_rs_core::time::from_secs)
+        .unwrap_or_else(wa_rs_core::time::now_utc)
 }
 
 /// Learn LID-PN mappings from a contacts modify notification.
@@ -1116,7 +1116,7 @@ async fn handle_contacts_notification(client: &Arc<Client>, node: &NodeRef<'_>) 
             let after = child
                 .attrs()
                 .optional_u64("after")
-                .and_then(|after| wacore::time::from_secs(after as i64));
+                .and_then(|after| wa_rs_core::time::from_secs(after as i64));
 
             debug!(
                 target: "Client/Contacts",
@@ -1165,8 +1165,8 @@ async fn handle_group_notification(client: &Arc<Client>, node: Arc<OwnedNodeRef>
 
     let timestamp = i64::try_from(notification.timestamp)
         .ok()
-        .and_then(wacore::time::from_secs)
-        .unwrap_or_else(wacore::time::now_utc);
+        .and_then(wa_rs_core::time::from_secs)
+        .unwrap_or_else(wa_rs_core::time::now_utc);
 
     for action in notification.actions {
         // Granularly patch group cache instead of invalidating — matches WA Web's
@@ -1257,7 +1257,7 @@ async fn handle_group_notification(client: &Arc<Client>, node: Arc<OwnedNodeRef>
 /// ```
 fn handle_newsletter_notification(client: &Arc<Client>, node: Arc<OwnedNodeRef>) {
     use crate::features::newsletter::parse_reaction_counts;
-    use wacore::types::events::{
+    use wa_rs_core::types::events::{
         NewsletterLiveUpdate, NewsletterLiveUpdateMessage, NewsletterLiveUpdateReaction,
     };
 
@@ -1320,7 +1320,7 @@ fn handle_mex_notification(client: &Arc<Client>, node: &NodeRef<'_>) {
         warn!(
             target: "Client/Mex",
             "mex notification missing <update> child: {}",
-            wacore::xml::DisplayableNodeRef(node)
+            wa_rs_core::xml::DisplayableNodeRef(node)
         );
         return;
     };
@@ -1329,7 +1329,7 @@ fn handle_mex_notification(client: &Arc<Client>, node: &NodeRef<'_>) {
         warn!(
             target: "Client/Mex",
             "mex notification <update> missing op_name attribute: {}",
-            wacore::xml::DisplayableNodeRef(node)
+            wa_rs_core::xml::DisplayableNodeRef(node)
         );
         return;
     };
@@ -1392,7 +1392,7 @@ fn handle_disappearing_mode_notification(client: &Arc<Client>, node: &NodeRef<'_
     let Some(dm_node) = node.get_optional_child("disappearing_mode") else {
         warn!(
             "disappearing_mode notification missing <disappearing_mode> child: {}",
-            wacore::xml::DisplayableNodeRef(node)
+            wa_rs_core::xml::DisplayableNodeRef(node)
         );
         return;
     };
@@ -1409,11 +1409,11 @@ fn handle_disappearing_mode_notification(client: &Arc<Client>, node: &NodeRef<'_
     let Some(setting_timestamp) = dm_attrs
         .optional_string("t")
         .and_then(|s| s.parse::<i64>().ok())
-        .and_then(wacore::time::from_secs)
+        .and_then(wa_rs_core::time::from_secs)
     else {
         warn!(
             "disappearing_mode notification missing or invalid 't' attribute: {}",
-            wacore::xml::DisplayableNodeRef(node)
+            wa_rs_core::xml::DisplayableNodeRef(node)
         );
         return;
     };
@@ -1427,7 +1427,7 @@ fn handle_disappearing_mode_notification(client: &Arc<Client>, node: &NodeRef<'_
         .core
         .event_bus
         .dispatch(Event::DisappearingModeChanged(
-            wacore::types::events::DisappearingModeChanged {
+            wa_rs_core::types::events::DisappearingModeChanged {
                 from,
                 duration,
                 setting_timestamp,
@@ -1440,10 +1440,10 @@ mod tests {
     use super::*;
     use crate::test_utils::{TestEventCollector, create_test_client};
     use std::sync::Arc;
-    use wacore::stanza::devices::DeviceNotificationType;
-    use wacore::types::events::DeviceListUpdateType;
-    use wacore_binary::Node;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_core::stanza::devices::DeviceNotificationType;
+    use wa_rs_core::types::events::DeviceListUpdateType;
+    use wa_rs_binary::Node;
+    use wa_rs_binary::builder::NodeBuilder;
 
     fn node_to_arc(node: Node) -> Arc<OwnedNodeRef> {
         crate::test_utils::node_to_owned_ref(&node)
@@ -1721,7 +1721,7 @@ mod tests {
         let setting_timestamp = dm_attrs
             .optional_string("t")
             .and_then(|s| s.parse::<i64>().ok())
-            .filter(|&t| wacore::time::from_secs(t).is_some())?;
+            .filter(|&t| wa_rs_core::time::from_secs(t).is_some())?;
         Some((duration, setting_timestamp))
     }
 
@@ -2006,13 +2006,13 @@ mod tests {
         client.register_handler(collector.clone());
 
         // Pre-populate device registry so clear_device_record has something to clear
-        let record = wacore::store::traits::DeviceListRecord {
+        let record = wa_rs_core::store::traits::DeviceListRecord {
             user: "5511999999999".into(),
-            devices: vec![wacore::store::traits::DeviceInfo {
+            devices: vec![wa_rs_core::store::traits::DeviceInfo {
                 device_id: 1,
                 key_index: None,
             }],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: Some(42),
         };
@@ -2102,8 +2102,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_identity_change_deletes_primary_session() {
-        use wacore::libsignal::protocol::SessionRecord;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::libsignal::protocol::SessionRecord;
+        use wa_rs_core::types::jid::JidExt;
 
         let client = create_test_client().await;
 
@@ -2143,8 +2143,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_identity_change_rotates_status_sender_key() {
-        use wacore::libsignal::store::sender_key_name::SenderKeyName;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
+        use wa_rs_core::types::jid::JidExt;
 
         let client = create_test_client().await;
 
@@ -2160,7 +2160,7 @@ mod tests {
         // Pre-populate a sender key for status@broadcast
         let sk_name =
             SenderKeyName::from_parts("status@broadcast", own_jid.to_protocol_address().as_str());
-        let sk_record = wacore::libsignal::protocol::SenderKeyRecord::new_empty();
+        let sk_record = wa_rs_core::libsignal::protocol::SenderKeyRecord::new_empty();
         client
             .signal_cache
             .put_sender_key(&sk_name, sk_record)

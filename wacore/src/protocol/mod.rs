@@ -2,7 +2,7 @@ pub mod keepalive;
 pub mod retry;
 
 use anyhow::Result;
-use wacore_binary::{Node, NodeRef};
+use wa_rs_binary::{Node, NodeRef};
 
 /// Represents a type that maps to a WhatsApp Protocol node.
 pub trait ProtocolNode: Sized {
@@ -98,13 +98,13 @@ macro_rules! define_simple_node {
                 $tag
             }
 
-            fn into_node(self) -> wacore_binary::Node {
-                wacore_binary::builder::NodeBuilder::new($tag)
+            fn into_node(self) -> wa_rs_binary::Node {
+                wa_rs_binary::builder::NodeBuilder::new($tag)
                     $(.attr($attr_name, self.$field.to_string()))*
                     .build()
             }
 
-            fn try_from_node_ref(node: &wacore_binary::NodeRef<'_>) -> anyhow::Result<Self> {
+            fn try_from_node_ref(node: &wa_rs_binary::NodeRef<'_>) -> anyhow::Result<Self> {
                 if node.tag != $tag {
                     return Err(anyhow::anyhow!("expected <{}>, got <{}>", $tag, node.tag));
                 }
@@ -150,11 +150,11 @@ macro_rules! define_empty_node {
                 $tag
             }
 
-            fn into_node(self) -> wacore_binary::Node {
-                wacore_binary::builder::NodeBuilder::new($tag).build()
+            fn into_node(self) -> wa_rs_binary::Node {
+                wa_rs_binary::builder::NodeBuilder::new($tag).build()
             }
 
-            fn try_from_node_ref(node: &wacore_binary::NodeRef<'_>) -> anyhow::Result<Self> {
+            fn try_from_node_ref(node: &wa_rs_binary::NodeRef<'_>) -> anyhow::Result<Self> {
                 if node.tag != $tag {
                     return Err(anyhow::anyhow!("expected <{}>, got <{}>", $tag, node.tag));
                 }

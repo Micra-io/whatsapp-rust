@@ -3,9 +3,9 @@ use rand::Rng;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
 use thiserror::Error;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, JidExt, LEGACY_USER_SERVER};
-use wacore_binary::{Node, NodeContent, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, JidExt, LEGACY_USER_SERVER};
+use wa_rs_binary::{Node, NodeContent, NodeRef};
 
 /// IQ request type for WhatsApp protocol queries.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, WireEnum)]
@@ -94,7 +94,7 @@ pub enum IqError {
 
 /// Lightweight server error that can be embedded in `anyhow::Error` and
 /// downcast from any crate. Used as a shared type across crate boundaries
-/// when `wacore::request::IqError` isn't directly available (e.g., errors
+/// when `wa_rs_core::request::IqError` isn't directly available (e.g., errors
 /// originating from the high-level crate's own `IqError`).
 ///
 /// To check a specific code: `err.downcast_ref::<ServerErrorCode>().is_some_and(|e| e.code == 406)`

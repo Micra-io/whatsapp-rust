@@ -1,9 +1,9 @@
 use e2e_tests::TestClient;
 use log::info;
-use wacore::types::events::Event;
-use whatsapp_rust::download::{Downloadable, MediaType};
-use whatsapp_rust::upload::UploadResponse;
-use whatsapp_rust::waproto::whatsapp as wa;
+use wa_rs_core::types::events::Event;
+use wa_rs::download::{Downloadable, MediaType};
+use wa_rs::upload::UploadResponse;
+use wa_rs::wa_rs_proto::whatsapp as wa;
 
 struct UploadedMediaParts {
     url: String,

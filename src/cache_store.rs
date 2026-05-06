@@ -14,7 +14,7 @@ use std::time::Duration;
 use crate::cache::Cache;
 use serde::{Serialize, de::DeserializeOwned};
 
-pub use wacore::store::cache::CacheStore;
+pub use wa_rs_core::store::cache::CacheStore;
 
 // ── Internal storage variant ──────────────────────────────────────────────────
 

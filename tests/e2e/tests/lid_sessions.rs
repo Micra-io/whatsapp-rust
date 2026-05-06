@@ -13,8 +13,8 @@
 
 use e2e_tests::{TestClient, send_and_expect_text};
 use log::info;
-use wacore::store::traits::SignalStore;
-use wacore::types::events::Event;
+use wa_rs_core::store::traits::SignalStore;
+use wa_rs_core::types::events::Event;
 
 fn mask_addr(addr: &str) -> String {
     if let Some(at) = addr.find('@') {

@@ -20,16 +20,16 @@ use log::{debug, info, warn};
 use prost::Message;
 use std::sync::Arc;
 use std::time::Duration;
-use wacore::types::message::{
+use wa_rs_core::types::message::{
     ChatMessageId, EditAttribute, MessageCategory, MessageSource, MsgMetaInfo,
 };
-use wacore_binary::{Jid, JidExt};
-use waproto::whatsapp as wa;
+use wa_rs_binary::{Jid, JidExt};
+use wa_rs_proto::whatsapp as wa;
 
 #[derive(Clone, Debug)]
 pub struct PendingPdoRequest {
     pub message_info: Arc<MessageInfo>,
-    pub requested_at: wacore::time::Instant,
+    pub requested_at: wa_rs_core::time::Instant,
 }
 
 impl Client {
@@ -72,7 +72,7 @@ impl Client {
         // the sender). Groups and broadcast chats need it so the phone can
         // locate the stored message.
         let participant = if !info.source.is_from_me
-            && (info.source.is_group || info.source.chat.server == wacore_binary::Server::Broadcast)
+            && (info.source.is_group || info.source.chat.server == wa_rs_binary::Server::Broadcast)
         {
             Some(self.resolve_encryption_jid(&info.source.sender).await)
         } else {
@@ -103,7 +103,7 @@ impl Client {
 
         let pending = PendingPdoRequest {
             message_info: Arc::clone(info),
-            requested_at: wacore::time::Instant::now(),
+            requested_at: wa_rs_core::time::Instant::now(),
         };
         self.pdo_pending_requests
             .insert(cache_key.clone(), pending)
@@ -350,7 +350,7 @@ impl Client {
         };
 
         {
-            use wacore::proto_helpers::MessageExt;
+            use wa_rs_core::proto_helpers::MessageExt;
             let mi = Arc::make_mut(&mut message_info);
             if mi.ephemeral_expiration.is_none() {
                 mi.ephemeral_expiration = message.get_base_message().get_ephemeral_expiration();
@@ -369,7 +369,7 @@ impl Client {
 
         self.core
             .event_bus
-            .dispatch(wacore::types::events::Event::Message(
+            .dispatch(wa_rs_core::types::events::Event::Message(
                 Arc::new(message),
                 message_info,
             ));
@@ -413,8 +413,8 @@ impl Client {
 
         let timestamp = web_msg
             .message_timestamp
-            .map(|ts| wacore::time::from_secs_or_now(ts as i64))
-            .unwrap_or_else(wacore::time::now_utc);
+            .map(|ts| wa_rs_core::time::from_secs_or_now(ts as i64))
+            .unwrap_or_else(wa_rs_core::time::now_utc);
 
         Ok(MessageInfo {
             id: key.id.clone().unwrap_or_default(),
@@ -468,7 +468,7 @@ impl Client {
         // Compare in seconds to stay bit-for-bit with WA Web's `age_s > i`
         // check — `num_days()` truncates and would let 14d1h through.
         const PDO_MAX_AGE: chrono::Duration = chrono::Duration::days(14);
-        let age = wacore::time::now_utc().signed_duration_since(info.timestamp);
+        let age = wa_rs_core::time::now_utc().signed_duration_since(info.timestamp);
         if age > PDO_MAX_AGE {
             debug!(
                 "PDO request skipped for message {} (age {}s exceeds {}s limit)",
@@ -497,7 +497,7 @@ impl Client {
                             .runtime
                             .sleep(Duration::from_millis(500))
                             .fuse() => {}
-                        _ = wacore::runtime::wait_for_shutdown(&shutdown).fuse() => {
+                        _ = wa_rs_core::runtime::wait_for_shutdown(&shutdown).fuse() => {
                             return;
                         }
                     }
@@ -529,7 +529,7 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
-    use wacore_binary::{Jid, JidExt, Server};
+    use wa_rs_binary::{Jid, JidExt, Server};
 
     #[test]
     fn test_pdo_peer_target_is_device_0() {
@@ -589,8 +589,8 @@ mod tests {
         from_me: bool,
         id: &str,
         participant: Option<&str>,
-    ) -> waproto::whatsapp::WebMessageInfo {
-        use waproto::whatsapp as wa;
+    ) -> wa_rs_proto::whatsapp::WebMessageInfo {
+        use wa_rs_proto::whatsapp as wa;
         wa::WebMessageInfo {
             key: wa::MessageKey {
                 remote_jid: Some(remote_jid.into()),

@@ -10,11 +10,11 @@ use crate::client::{Client, ClientError, NodeFilter};
 use anyhow::Result;
 use log::debug;
 use std::time::Duration;
-pub use wacore::media_retry::MediaRetryResult;
-use wacore::media_retry::{
+pub use wa_rs_core::media_retry::MediaRetryResult;
+use wa_rs_core::media_retry::{
     build_media_retry_receipt, encrypt_media_retry_receipt, parse_media_retry_notification,
 };
-use wacore_binary::{Jid, JidExt as _};
+use wa_rs_binary::{Jid, JidExt as _};
 
 const MEDIA_RETRY_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -97,7 +97,7 @@ impl<'a> MediaReupload<'a> {
 
         // Wait for the mediaretry notification
         let notification_node =
-            wacore::runtime::timeout(&*self.client.runtime, MEDIA_RETRY_TIMEOUT, waiter)
+            wa_rs_core::runtime::timeout(&*self.client.runtime, MEDIA_RETRY_TIMEOUT, waiter)
                 .await
                 .map_err(|_| anyhow::anyhow!("media retry notification timed out after 30s"))?
                 .map_err(|_| anyhow::anyhow!("media retry waiter cancelled"))?;

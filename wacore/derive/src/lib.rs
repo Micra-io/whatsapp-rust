@@ -1,4 +1,4 @@
-//! Derive macros for wacore protocol types.
+//! Derive macros for wa_rs_core protocol types.
 //!
 //! This crate provides derive macros for implementing the `ProtocolNode` trait
 //! on structs that represent WhatsApp protocol nodes.
@@ -6,7 +6,7 @@
 //! # Example
 //!
 //! ```ignore
-//! use wacore_derive::{ProtocolNode, WireEnum};
+//! use wa_rs_derive::{ProtocolNode, WireEnum};
 //!
 //! /// A query request node.
 //! /// Wire format: `<query request="interactive"/>`
@@ -220,14 +220,14 @@ pub fn derive_protocol_node(input: TokenStream) -> TokenStream {
                 // StringEnum: parse using the `parse_string_enum` helper which tries TryFrom then From.
                 (AttrType::StringEnum, false, Some(default)) => {
                     quote! {
-                        #field_ident: ::wacore::protocol::parse_string_enum(
+                        #field_ident: ::wa_rs_core::protocol::parse_string_enum(
                             node.attrs().optional_string(#attr_name).as_deref().unwrap_or(#default)
                         )?
                     }
                 }
                 (AttrType::StringEnum, false, None) => {
                     quote! {
-                        #field_ident: ::wacore::protocol::parse_string_enum(
+                        #field_ident: ::wa_rs_core::protocol::parse_string_enum(
                             &node.attrs().optional_string(#attr_name)
                                 .ok_or_else(|| ::anyhow::anyhow!("missing required attribute '{}'", #attr_name))?
                         )?
@@ -236,7 +236,7 @@ pub fn derive_protocol_node(input: TokenStream) -> TokenStream {
                 (AttrType::StringEnum, true, _) => {
                     quote! {
                         #field_ident: node.attrs().optional_string(#attr_name)
-                            .map(|s| ::wacore::protocol::parse_string_enum(&s))
+                            .map(|s| ::wa_rs_core::protocol::parse_string_enum(&s))
                             .transpose()?
                     }
                 }
@@ -290,7 +290,7 @@ pub fn derive_protocol_node(input: TokenStream) -> TokenStream {
                         quote! { #field_ident: #default.to_string() }
                     }
                     (AttrType::StringEnum, false, Some(default)) => {
-                        quote! { #field_ident: ::wacore::protocol::parse_string_enum(#default)
+                        quote! { #field_ident: ::wa_rs_core::protocol::parse_string_enum(#default)
                         .expect("invalid default for StringEnum field") }
                     }
                     (AttrType::StringEnum, false, None) => {
@@ -315,18 +315,18 @@ pub fn derive_protocol_node(input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        impl ::wacore::protocol::ProtocolNode for #name {
+        impl ::wa_rs_core::protocol::ProtocolNode for #name {
             fn tag(&self) -> &'static str {
                 #tag
             }
 
-            fn into_node(self) -> ::wacore_binary::node::Node {
-                let mut builder = ::wacore_binary::builder::NodeBuilder::new(#tag);
+            fn into_node(self) -> ::wa_rs_binary::node::Node {
+                let mut builder = ::wa_rs_binary::builder::NodeBuilder::new(#tag);
                 #(#attr_setters)*
                 builder.build()
             }
 
-            fn try_from_node_ref(node: &::wacore_binary::node::NodeRef<'_>) -> ::anyhow::Result<Self> {
+            fn try_from_node_ref(node: &::wa_rs_binary::node::NodeRef<'_>) -> ::anyhow::Result<Self> {
                 if node.tag != #tag {
                     return Err(::anyhow::anyhow!("expected <{}>, got <{}>", #tag, node.tag));
                 }
@@ -379,16 +379,16 @@ pub fn derive_empty_node(input: TokenStream) -> TokenStream {
 
 fn generate_empty_impl(name: &syn::Ident, tag: &str) -> proc_macro2::TokenStream {
     quote! {
-        impl ::wacore::protocol::ProtocolNode for #name {
+        impl ::wa_rs_core::protocol::ProtocolNode for #name {
             fn tag(&self) -> &'static str {
                 #tag
             }
 
-            fn into_node(self) -> ::wacore_binary::node::Node {
-                ::wacore_binary::builder::NodeBuilder::new(#tag).build()
+            fn into_node(self) -> ::wa_rs_binary::node::Node {
+                ::wa_rs_binary::builder::NodeBuilder::new(#tag).build()
             }
 
-            fn try_from_node_ref(node: &::wacore_binary::node::NodeRef<'_>) -> ::anyhow::Result<Self> {
+            fn try_from_node_ref(node: &::wa_rs_binary::node::NodeRef<'_>) -> ::anyhow::Result<Self> {
                 if node.tag != #tag {
                     return Err(::anyhow::anyhow!("expected <{}>, got <{}>", #tag, node.tag));
                 }
@@ -927,7 +927,7 @@ fn expand_wire_enum_unit(
                 }
             }
 
-            impl ::wacore::protocol::ParseStringEnum for #name {
+            impl ::wa_rs_core::protocol::ParseStringEnum for #name {
                 fn parse_from_str(s: &str) -> ::anyhow::Result<Self> {
                     ::core::result::Result::Ok(::core::convert::From::from(s))
                 }
@@ -953,7 +953,7 @@ fn expand_wire_enum_unit(
                 }
             }
 
-            impl ::wacore::protocol::ParseStringEnum for #name {
+            impl ::wa_rs_core::protocol::ParseStringEnum for #name {
                 fn parse_from_str(s: &str) -> ::anyhow::Result<Self> {
                     ::core::convert::TryFrom::try_from(s)
                 }
@@ -1396,7 +1396,7 @@ fn expand_wire_enum_tagged(
         /// dispatch. Primary wire tags and any `#[wire_alias]` entries all
         /// resolve to the same variant via `From<&str>`.
         #[doc = "Auto-generated by `#[derive(WireEnum)]`."]
-        #[derive(Debug, Clone, PartialEq, Eq, ::wacore::WireEnum)]
+        #[derive(Debug, Clone, PartialEq, Eq, ::wa_rs_core::WireEnum)]
         #[allow(clippy::enum_variant_names)]
         pub enum #tag_ident {
             #(#tag_variant_tokens,)*

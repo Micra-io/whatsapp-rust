@@ -1,7 +1,7 @@
 use e2e_tests::{TestClient, text_msg};
 use log::info;
-use wacore::types::events::Event;
-use wacore::types::presence::ReceiptType;
+use wa_rs_core::types::events::Event;
+use wa_rs_core::types::presence::ReceiptType;
 
 #[tokio::test]
 async fn test_deferred_delivery_receipt() -> anyhow::Result<()> {

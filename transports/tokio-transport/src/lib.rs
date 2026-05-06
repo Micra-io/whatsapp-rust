@@ -11,7 +11,7 @@ use std::sync::{Arc, Once};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::Mutex;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream};
-use wacore::net::{Transport, TransportEvent, TransportFactory, WHATSAPP_WEB_WS_URL};
+use wa_rs_core::net::{Transport, TransportEvent, TransportFactory, WHATSAPP_WEB_WS_URL};
 
 pub use tokio_websockets::Connector;
 

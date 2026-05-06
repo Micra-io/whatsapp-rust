@@ -22,7 +22,7 @@ impl StanzaHandler for ReceiptHandler {
     async fn handle(
         &self,
         client: Arc<Client>,
-        node: Arc<wacore_binary::OwnedNodeRef>,
+        node: Arc<wa_rs_binary::OwnedNodeRef>,
         _cancelled: &mut bool,
     ) -> bool {
         client.handle_receipt(node).await;

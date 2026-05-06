@@ -4,19 +4,19 @@
 //! Uses MEX (GraphQL) for metadata/management and standard IQ for message operations.
 //! Newsletter messages are plaintext (no Signal E2E encryption).
 
-use wacore::WireEnum;
+use wa_rs_core::WireEnum;
 
 use crate::client::Client;
 use crate::features::mex::{MexError, MexRequest};
 use prost::Message as ProtoMessage;
 use serde_json::json;
-use wacore::iq::mex_ids::newsletter as newsletter_docs;
-use wacore::iq::newsletter::NEWSLETTER_XMLNS;
-use wacore::request::InfoQuery;
-use wacore_binary::Jid;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{NodeContent, NodeContentRef, NodeRef};
-use waproto::whatsapp as wa;
+use wa_rs_core::iq::mex_ids::newsletter as newsletter_docs;
+use wa_rs_core::iq::newsletter::NEWSLETTER_XMLNS;
+use wa_rs_core::request::InfoQuery;
+use wa_rs_binary::Jid;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{NodeContent, NodeContentRef, NodeRef};
+use wa_rs_proto::whatsapp as wa;
 
 // Types
 
@@ -592,7 +592,7 @@ fn parse_newsletter_messages_response(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn test_missing_type_attribute_defaults_to_text() {

@@ -12,7 +12,7 @@
 //! # Example (Generic)
 //!
 //! ```ignore
-//! use wacore_noise::{NoiseState, generate_iv};
+//! use wa_rs_noise::{NoiseState, generate_iv};
 //!
 //! let mut noise = NoiseState::new(b"Noise_XX_25519_AESGCM_SHA256\0\0\0\0", &prologue)?;
 //! noise.authenticate(&my_ephemeral_public);
@@ -24,8 +24,8 @@
 //! # Example (WhatsApp)
 //!
 //! ```ignore
-//! use wacore_noise::NoiseHandshake;
-//! use wacore_binary::consts::{NOISE_PATTERN_XX, WA_CONN_HEADER};
+//! use wa_rs_noise::NoiseHandshake;
+//! use wa_rs_binary::consts::{NOISE_PATTERN_XX, WA_CONN_HEADER};
 //!
 //! let mut nh = NoiseHandshake::new(NOISE_PATTERN_XX, &WA_CONN_HEADER)?;
 //! nh.authenticate(&ephemeral_public);

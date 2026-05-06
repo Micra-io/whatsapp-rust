@@ -1,6 +1,6 @@
-use wacore::WireEnum;
-use wacore_binary::Jid;
-use waproto::whatsapp as wa;
+use wa_rs_core::WireEnum;
+use wa_rs_binary::Jid;
+use wa_rs_proto::whatsapp as wa;
 
 use crate::client::Client;
 use crate::send::SendResult;
@@ -187,8 +187,8 @@ impl Client {
     ///
     /// # Example
     /// ```no_run
-    /// # async fn example(client: &whatsapp_rust::Client) -> anyhow::Result<()> {
-    /// let recipients = [whatsapp_rust::Jid::pn("15551234567")];
+    /// # async fn example(client: &wa_rs::Client) -> anyhow::Result<()> {
+    /// let recipients = [wa_rs::Jid::pn("15551234567")];
     /// let id = client
     ///     .status()
     ///     .send_text("Hello!", 0xFF1E6E4F, 0, &recipients, Default::default())
@@ -232,9 +232,9 @@ mod tests {
         let bg = 0xFF1E6E4F_u32;
         let font = 2_i32;
 
-        let message = waproto::whatsapp::Message {
+        let message = wa_rs_proto::whatsapp::Message {
             extended_text_message: Some(Box::new(
-                waproto::whatsapp::message::ExtendedTextMessage {
+                wa_rs_proto::whatsapp::message::ExtendedTextMessage {
                     text: Some(text.to_string()),
                     background_argb: Some(bg),
                     font: Some(font),
@@ -252,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_status_revoke_message_structure() {
-        use waproto::whatsapp as wa;
+        use wa_rs_proto::whatsapp as wa;
 
         let original_id = "3EB06D00CAB92340790621";
         let to = Jid::status_broadcast();
@@ -284,7 +284,7 @@ mod tests {
 
     #[test]
     fn test_revoke_is_detected_as_revoke() {
-        use waproto::whatsapp as wa;
+        use wa_rs_proto::whatsapp as wa;
 
         // Non-revoke message
         let text_msg = wa::Message {
