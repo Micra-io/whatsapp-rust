@@ -90,10 +90,14 @@ pub fn process_history_sync(
             }
 
             // field 7 = pushnames (repeated, length-delimited)
-            7 if let Some(own) = own_user
+            // Guard refactored from `if let Some(own) = own_user && …` to bare boolean
+            // conditions so wacore compiles on stable Rust (consumers like ZeroClaw build
+            // on stable; if-let-guards remain unstabilized — rust-lang/rust#51114).
+            7 if own_user.is_some()
                 && result.own_pushname.is_none()
                 && wire_type_raw == wire_type::LENGTH_DELIMITED =>
             {
+                let own = own_user.expect("guard checked is_some");
                 let (len, vlen) = read_varint(&buf[pos..])?;
                 pos += vlen;
                 let end = checked_end(pos, len, buf.len(), "pushname")?;
