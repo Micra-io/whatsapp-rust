@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use base64::Engine;
 use serde::Deserialize;
-use wacore::download::MediaType;
+use wa_rs_core::download::MediaType;
 
 use crate::client::Client;
 use crate::http::{HttpRequest, HttpResponse};
@@ -108,7 +108,7 @@ async fn upload_media_with_retry<
     ExecuteRequest,
     ExecuteRequestFut,
 >(
-    enc: &wacore::upload::EncryptedMedia,
+    enc: &wa_rs_core::upload::EncryptedMedia,
     media_type: MediaType,
     file_length: u64,
     media_key_timestamp: i64,
@@ -250,7 +250,7 @@ pub struct UploadResponse {
     pub media_key_timestamp: i64,
 }
 
-impl From<UploadResponse> for wacore::sticker_pack::MediaUploadInfo {
+impl From<UploadResponse> for wa_rs_core::sticker_pack::MediaUploadInfo {
     fn from(r: UploadResponse) -> Self {
         Self::new(
             r.direct_path,
@@ -320,8 +320,8 @@ impl Client {
         options: UploadOptions,
     ) -> Result<UploadResponse> {
         let file_length = data.len() as u64;
-        let enc = wacore::runtime::blocking(&*self.runtime, move || {
-            wacore::upload::encrypt_media_with_key(&data, media_type, options.media_key.as_ref())
+        let enc = wa_rs_core::runtime::blocking(&*self.runtime, move || {
+            wa_rs_core::upload::encrypt_media_with_key(&data, media_type, options.media_key.as_ref())
         })
         .await?;
 
@@ -329,7 +329,7 @@ impl Client {
             &enc,
             media_type,
             file_length,
-            wacore::time::now_secs(),
+            wa_rs_core::time::now_secs(),
             |force| async move { self.refresh_media_conn(force).await.map_err(Into::into) },
             || async { self.invalidate_media_conn().await },
             |request| async move { self.http_client.execute(request).await },
@@ -344,7 +344,7 @@ mod tests {
     use crate::mediaconn::{MediaConn, MediaConnHost};
     use async_lock::Mutex;
     use std::sync::Arc;
-    use wacore::time::Instant;
+    use wa_rs_core::time::Instant;
 
     fn media_conn(auth: &str, hosts: &[&str]) -> MediaConn {
         MediaConn {
@@ -361,7 +361,7 @@ mod tests {
 
     #[tokio::test]
     async fn upload_retries_with_forced_media_conn_refresh_after_auth_error() {
-        let enc = wacore::upload::encrypt_media(b"retry me", MediaType::Image)
+        let enc = wa_rs_core::upload::encrypt_media(b"retry me", MediaType::Image)
             .expect("encryption should succeed");
         let first_conn = media_conn("stale-auth", &["cdn1.example.com"]);
         let refreshed_conn = media_conn("fresh-auth", &["cdn2.example.com"]);
@@ -435,7 +435,7 @@ mod tests {
 
     #[tokio::test]
     async fn upload_fails_over_to_next_host_after_non_auth_error() {
-        let enc = wacore::upload::encrypt_media(b"retry host", MediaType::Image)
+        let enc = wa_rs_core::upload::encrypt_media(b"retry host", MediaType::Image)
             .expect("encryption should succeed");
         let conn = media_conn("shared-auth", &["cdn1.example.com", "cdn2.example.com"]);
         let seen_urls = Arc::new(Mutex::new(Vec::new()));

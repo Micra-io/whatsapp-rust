@@ -11,7 +11,7 @@ use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use async_lock::RwLock;
-use wacore_binary::CompactString;
+use wa_rs_binary::CompactString;
 
 use crate::iq::props::config_codes;
 

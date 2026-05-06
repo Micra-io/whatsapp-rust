@@ -5,7 +5,7 @@
 
 use anyhow::Result;
 use log::{debug, info, warn};
-use wacore_binary::Jid;
+use wa_rs_binary::Jid;
 
 use super::Client;
 
@@ -97,7 +97,7 @@ impl Client {
     }
 
     /// WA Web: `isFromKnownDevice(author)` — local check only, no network.
-    pub(crate) async fn is_from_known_device(&self, sender: &wacore_binary::Jid) -> bool {
+    pub(crate) async fn is_from_known_device(&self, sender: &wa_rs_binary::Jid) -> bool {
         let device_id = sender.device as u32;
         self.has_device(&sender.user, device_id).await
     }
@@ -144,7 +144,7 @@ impl Client {
     /// Stores under LID when mapping is known, otherwise under PN.
     pub(crate) async fn update_device_list(
         &self,
-        mut record: wacore::store::traits::DeviceListRecord,
+        mut record: wa_rs_core::store::traits::DeviceListRecord,
     ) -> Result<()> {
         use anyhow::Context;
 
@@ -197,7 +197,7 @@ impl Client {
     /// dominated wall-clock time on large groups.
     pub(crate) async fn update_device_lists(
         &self,
-        records: Vec<wacore::store::traits::DeviceListRecord>,
+        records: Vec<wa_rs_core::store::traits::DeviceListRecord>,
     ) -> Result<()> {
         use anyhow::Context;
 
@@ -284,8 +284,8 @@ impl Client {
     pub(crate) async fn patch_device_add(
         &self,
         user: &str,
-        device: &wacore::stanza::devices::DeviceElement,
-        key_index_info: Option<&wacore::stanza::devices::KeyIndexInfo>,
+        device: &wa_rs_core::stanza::devices::DeviceElement,
+        key_index_info: Option<&wa_rs_core::stanza::devices::KeyIndexInfo>,
     ) {
         let device_id = device.device_id();
 
@@ -296,7 +296,7 @@ impl Client {
         let signed_bytes = key_index_info.and_then(|ki| ki.signed_bytes.as_deref());
 
         if let Some(bytes) = signed_bytes {
-            if let Some(decoded) = wacore::adv::decode_key_index_list(bytes) {
+            if let Some(decoded) = wa_rs_core::adv::decode_key_index_list(bytes) {
                 // Check raw_id mismatch (identity change)
                 // TODO: WA Web also triggers clearRecord on advAccountType change
                 // (HOSTED ↔ E2EE), gated behind bizCoexGatingUtils.bizHostedDevicesEnabled().
@@ -316,13 +316,13 @@ impl Client {
 
                 // Filter stale devices by valid_indexes
                 record.devices =
-                    wacore::adv::filter_devices_by_key_index(&record.devices, &decoded);
+                    wa_rs_core::adv::filter_devices_by_key_index(&record.devices, &decoded);
 
                 // Only add the new device if its key_index is accepted by the ADV list
                 if !record.devices.iter().any(|d| d.device_id == device_id)
-                    && wacore::adv::is_key_index_valid(device.key_index, &decoded)
+                    && wa_rs_core::adv::is_key_index_valid(device.key_index, &decoded)
                 {
-                    record.devices.push(wacore::store::traits::DeviceInfo {
+                    record.devices.push(wa_rs_core::store::traits::DeviceInfo {
                         device_id,
                         key_index: device.key_index,
                     });
@@ -348,12 +348,12 @@ impl Client {
     /// Append a device if it doesn't already exist in the record.
     fn append_device_if_new(
         &self,
-        record: &mut wacore::store::traits::DeviceListRecord,
+        record: &mut wa_rs_core::store::traits::DeviceListRecord,
         device_id: u32,
         key_index: Option<u32>,
     ) {
         if !record.devices.iter().any(|d| d.device_id == device_id) {
-            record.devices.push(wacore::store::traits::DeviceInfo {
+            record.devices.push(wa_rs_core::store::traits::DeviceInfo {
                 device_id,
                 key_index,
             });
@@ -365,13 +365,13 @@ impl Client {
     /// `patch_device_remove`.
     async fn delete_sessions_for_devices(&self, user: &str, device_ids: &[u16]) {
         let lookup = self.resolve_lookup_keys(user).await;
-        let servers = [wacore_binary::Server::Lid, wacore_binary::Server::Pn];
+        let servers = [wa_rs_binary::Server::Lid, wa_rs_binary::Server::Pn];
         for server in servers {
             for key in lookup.all_keys() {
                 for &device_id in device_ids {
                     let mut jid = Jid::new(key, server);
                     jid.device = device_id;
-                    let addr = wacore::types::jid::JidExt::to_protocol_address(&jid);
+                    let addr = wa_rs_core::types::jid::JidExt::to_protocol_address(&jid);
                     self.signal_cache.delete_session(&addr).await;
                 }
             }
@@ -389,7 +389,7 @@ impl Client {
         &self,
         user: &str,
         _server: &str,
-        record: &wacore::store::traits::DeviceListRecord,
+        record: &wa_rs_core::store::traits::DeviceListRecord,
     ) {
         let non_primary_ids: Vec<u16> = record
             .devices
@@ -475,9 +475,9 @@ impl Client {
         &self,
         user: &str,
         device_id: u16,
-    ) -> Result<(), wacore::store::error::StoreError> {
+    ) -> Result<(), wa_rs_core::store::error::StoreError> {
         let lookup = self.resolve_lookup_keys(user).await;
-        let servers = [wacore_binary::Server::Lid, wacore_binary::Server::Pn];
+        let servers = [wa_rs_binary::Server::Lid, wa_rs_binary::Server::Pn];
         let mut candidates: Vec<String> = Vec::with_capacity(4);
         for server in servers {
             for key in lookup.all_keys() {
@@ -503,7 +503,7 @@ impl Client {
     pub(crate) async fn patch_device_update(
         &self,
         user: &str,
-        device: &wacore::stanza::devices::DeviceElement,
+        device: &wa_rs_core::stanza::devices::DeviceElement,
     ) {
         let device_id = device.device_id();
 
@@ -521,7 +521,7 @@ impl Client {
     pub(crate) async fn load_device_record(
         &self,
         user: &str,
-    ) -> Option<wacore::store::traits::DeviceListRecord> {
+    ) -> Option<wa_rs_core::store::traits::DeviceListRecord> {
         let lookup = self.resolve_lookup_keys(user).await;
 
         for key in lookup.all_keys() {
@@ -593,7 +593,7 @@ impl Client {
     /// (and vice versa), which matters after PN-to-LID migration.
     fn reconstruct_device_jids(
         query_jid: &Jid,
-        record: &wacore::store::traits::DeviceListRecord,
+        record: &wa_rs_core::store::traits::DeviceListRecord,
     ) -> Vec<Jid> {
         let user = &query_jid.user;
         record
@@ -688,16 +688,16 @@ mod tests {
     }
 
     async fn setup_device_record(client: &Arc<Client>, user: &str, device_ids: &[u32]) {
-        let record = wacore::store::traits::DeviceListRecord {
+        let record = wa_rs_core::store::traits::DeviceListRecord {
             user: user.into(),
             devices: device_ids
                 .iter()
-                .map(|&id| wacore::store::traits::DeviceInfo {
+                .map(|&id| wa_rs_core::store::traits::DeviceInfo {
                     device_id: id,
                     key_index: None,
                 })
                 .collect(),
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -866,11 +866,11 @@ mod tests {
     fn make_device_element(
         device_id: u16,
         key_index: Option<u32>,
-    ) -> wacore::stanza::devices::DeviceElement {
-        wacore::stanza::devices::DeviceElement {
+    ) -> wa_rs_core::stanza::devices::DeviceElement {
+        wa_rs_core::stanza::devices::DeviceElement {
             jid: Jid {
                 user: "15551234567".into(),
-                server: wacore_binary::Server::Pn,
+                server: wa_rs_binary::Server::Pn,
                 device: device_id,
                 ..Default::default()
             },
@@ -958,14 +958,14 @@ mod tests {
         let client = create_test_client().await;
 
         // Pre-populate registry cache
-        let record = wacore::store::traits::DeviceListRecord {
+        let record = wa_rs_core::store::traits::DeviceListRecord {
             user: "15551234567".to_string(),
             devices: vec![
-                wacore::store::traits::DeviceInfo {
+                wa_rs_core::store::traits::DeviceInfo {
                     device_id: 0,
                     key_index: None,
                 },
-                wacore::store::traits::DeviceInfo {
+                wa_rs_core::store::traits::DeviceInfo {
                     device_id: 3,
                     key_index: Some(1),
                 },
@@ -1015,7 +1015,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_lid_migration_preserves_registry_cache() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
         let pn = "15550000099";
@@ -1034,7 +1034,7 @@ mod tests {
                     key_index: Some(25),
                 },
             ],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -1115,7 +1115,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_patch_device_add_falls_back_to_db() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
 
@@ -1126,7 +1126,7 @@ mod tests {
                 device_id: 0,
                 key_index: None,
             }],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -1172,7 +1172,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_patch_device_remove_falls_back_to_db() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
 
@@ -1188,7 +1188,7 @@ mod tests {
                     key_index: Some(5),
                 },
             ],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -1255,7 +1255,7 @@ mod tests {
     #[tokio::test]
     async fn test_patch_device_add_no_invalidation_when_device_exists() {
         use crate::sender_key_device_cache::SenderKeyDeviceMap;
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
 
@@ -1272,7 +1272,7 @@ mod tests {
                     key_index: Some(5),
                 },
             ],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -1354,7 +1354,7 @@ mod tests {
     /// through alias lookup, causing 406s on group sends.
     #[tokio::test]
     async fn test_update_device_list_canonical_flip_deletes_old_db_row() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
         let pn = "15550000011";
@@ -1369,7 +1369,7 @@ mod tests {
                     device_id: 5,
                     key_index: None,
                 }],
-                timestamp: wacore::time::now_secs(),
+                timestamp: wa_rs_core::time::now_secs(),
                 phash: None,
                 raw_id: None,
             })
@@ -1387,7 +1387,7 @@ mod tests {
                     device_id: 7,
                     key_index: None,
                 }],
-                timestamp: wacore::time::now_secs(),
+                timestamp: wa_rs_core::time::now_secs(),
                 phash: None,
                 raw_id: None,
             })
@@ -1408,7 +1408,7 @@ mod tests {
     /// as a zombie that surfaced via alias lookup on future sends.
     #[tokio::test]
     async fn test_migrate_device_registry_deletes_pn_db_row() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
         let pn = "15550000022";
@@ -1422,7 +1422,7 @@ mod tests {
                     device_id: 0,
                     key_index: None,
                 }],
-                timestamp: wacore::time::now_secs(),
+                timestamp: wa_rs_core::time::now_secs(),
                 phash: None,
                 raw_id: None,
             })
@@ -1450,7 +1450,7 @@ mod tests {
     /// the 23-batches-in-3h45m zombie loop from the field report.
     #[tokio::test]
     async fn test_invalidate_device_cache_clears_both_aliases_from_db() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
         let pn = "15550000033";
@@ -1466,7 +1466,7 @@ mod tests {
                         device_id: 1,
                         key_index: None,
                     }],
-                    timestamp: wacore::time::now_secs(),
+                    timestamp: wa_rs_core::time::now_secs(),
                     phash: None,
                     raw_id: None,
                 })
@@ -1511,7 +1511,7 @@ mod tests {
     /// (removing either one would fail this test).
     #[tokio::test]
     async fn test_update_device_list_canonical_flip_clears_warm_cache() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
 
         let client = create_test_client().await;
         let pn = "15550000044";
@@ -1524,7 +1524,7 @@ mod tests {
                 device_id: 9,
                 key_index: None,
             }],
-            timestamp: wacore::time::now_secs(),
+            timestamp: wa_rs_core::time::now_secs(),
             phash: None,
             raw_id: None,
         };
@@ -1542,7 +1542,7 @@ mod tests {
                     device_id: 10,
                     key_index: None,
                 }],
-                timestamp: wacore::time::now_secs(),
+                timestamp: wa_rs_core::time::now_secs(),
                 phash: None,
                 raw_id: None,
             })
@@ -1679,9 +1679,9 @@ mod tests {
     #[tokio::test]
     async fn participant_remove_rotates_sender_key_when_any_had_key() {
         use std::str::FromStr;
-        use wacore::libsignal::protocol::SenderKeyRecord;
-        use wacore::libsignal::store::sender_key_name::SenderKeyName;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::libsignal::protocol::SenderKeyRecord;
+        use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
+        use wa_rs_core::types::jid::JidExt;
 
         let client = create_test_client().await;
         let group = "120363000000000001@g.us";
@@ -1740,9 +1740,9 @@ mod tests {
     #[tokio::test]
     async fn participant_remove_skips_rotation_when_none_had_key() {
         use std::str::FromStr;
-        use wacore::libsignal::protocol::SenderKeyRecord;
-        use wacore::libsignal::store::sender_key_name::SenderKeyName;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::libsignal::protocol::SenderKeyRecord;
+        use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
+        use wa_rs_core::types::jid::JidExt;
 
         let client = create_test_client().await;
         let group = "120363000000000001@g.us";

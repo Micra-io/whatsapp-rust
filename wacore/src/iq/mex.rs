@@ -22,9 +22,9 @@ use anyhow::anyhow;
 use log::warn;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{NodeContent, NodeContentRef, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{NodeContent, NodeContentRef, NodeRef};
 
 /// MEX persisted-query descriptor. Pairing `name` with `id` lets diagnostics
 /// surface a stable identifier when the numeric `id` rotates between WA Web
@@ -189,7 +189,7 @@ impl IqSpec for MexQuerySpec {
                 warn!(
                     target: "Mex",
                     "MEX query '{}' (doc_id={}) looks like a stale persisted-query id: {}. \
-                     Refresh the id from the latest WA Web bundle in wacore::iq::mex_ids.",
+                     Refresh the id from the latest WA Web bundle in wa_rs_core::iq::mex_ids.",
                     self.doc.name, self.doc.id, fatal.message
                 );
             }

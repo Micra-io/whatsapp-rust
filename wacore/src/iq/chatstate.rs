@@ -1,7 +1,7 @@
 //! Chatstate protocol types following the ProtocolNode pattern.
 //!
 //! This module provides type-safe structures for parsing incoming `<chatstate>` stanzas
-//! (typing indicators) following the patterns defined in `wacore/src/protocol.rs`.
+//! (typing indicators) following the patterns defined in `wa_rs_core/src/protocol.rs`.
 //!
 //! ## Wire Format
 //!
@@ -23,9 +23,9 @@ use crate::WireEnum;
 use crate::protocol::ProtocolNode;
 use anyhow::Result;
 use thiserror::Error;
-use wacore_binary::Jid;
-use wacore_binary::Node;
-use wacore_binary::NodeRef;
+use wa_rs_binary::Jid;
+use wa_rs_binary::Node;
+use wa_rs_binary::NodeRef;
 
 /// Error type for chatstate parsing failures.
 #[derive(Debug, Error)]
@@ -183,7 +183,7 @@ impl ProtocolNode for ChatstateStanza {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn test_received_chat_state_string_enum() {
@@ -341,7 +341,7 @@ mod tests {
     fn test_parse_jid_attribute_as_jid_type() {
         // In the binary protocol, JID attributes are stored as actual JID types,
         // not strings. This test simulates that by passing a Jid directly to attr().
-        use wacore_binary::Jid;
+        use wa_rs_binary::Jid;
 
         let jid: Jid = "236395184570386@lid".parse().unwrap();
         let node = NodeBuilder::new("chatstate")
@@ -362,7 +362,7 @@ mod tests {
     #[test]
     fn test_parse_group_chatstate_with_jid_types() {
         // Test group chatstate with JID-typed attributes (as binary protocol stores them)
-        use wacore_binary::Jid;
+        use wa_rs_binary::Jid;
 
         let group_jid: Jid = "123456789-1234567890@g.us".parse().unwrap();
         let participant_jid: Jid = "236395184570386@lid".parse().unwrap();

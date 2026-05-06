@@ -8,9 +8,9 @@
 //! ## Random Code (Default)
 //!
 //! ```rust,no_run
-//! use whatsapp_rust::pair_code::PairCodeOptions;
+//! use wa_rs::pair_code::PairCodeOptions;
 //!
-//! # async fn example(client: std::sync::Arc<whatsapp_rust::Client>) -> Result<(), Box<dyn std::error::Error>> {
+//! # async fn example(client: std::sync::Arc<wa_rs::Client>) -> Result<(), Box<dyn std::error::Error>> {
 //! let options = PairCodeOptions {
 //!     phone_number: "15551234567".to_string(),
 //!     ..Default::default()
@@ -27,9 +27,9 @@
 //! (characters: `123456789ABCDEFGHJKLMNPQRSTVWXYZ` - excludes 0, I, O, U):
 //!
 //! ```rust,no_run
-//! use whatsapp_rust::pair_code::PairCodeOptions;
+//! use wa_rs::pair_code::PairCodeOptions;
 //!
-//! # async fn example(client: std::sync::Arc<whatsapp_rust::Client>) -> Result<(), Box<dyn std::error::Error>> {
+//! # async fn example(client: std::sync::Arc<wa_rs::Client>) -> Result<(), Box<dyn std::error::Error>> {
 //! let options = PairCodeOptions {
 //!     phone_number: "15551234567".to_string(),
 //!     custom_code: Some("MYCODE12".to_string()), // Must be exactly 8 valid chars
@@ -51,17 +51,17 @@ use crate::types::events::Event;
 use log::{error, info, warn};
 
 use std::sync::Arc;
-use wacore::libsignal::protocol::KeyPair;
-use wacore::pair_code::{PairCodeState, PairCodeUtils, resolve_companion_platform};
-use wacore_binary::Jid;
-use wacore_binary::{NodeContent, NodeContentRef, NodeRef};
+use wa_rs_core::libsignal::protocol::KeyPair;
+use wa_rs_core::pair_code::{PairCodeState, PairCodeUtils, resolve_companion_platform};
+use wa_rs_binary::Jid;
+use wa_rs_binary::{NodeContent, NodeContentRef, NodeRef};
 
-pub use wacore::companion_reg::CompanionWebClientType;
-pub use wacore::pair_code::{PairCodeError, PairCodeOptions};
+pub use wa_rs_core::companion_reg::CompanionWebClientType;
+pub use wa_rs_core::pair_code::{PairCodeError, PairCodeOptions};
 
 /// Errors raised by the high-level pair-code flow.
 ///
-/// Wraps `wacore::pair_code::PairCodeError` (validation, key derivation, bundle
+/// Wraps `wa_rs_core::pair_code::PairCodeError` (validation, key derivation, bundle
 /// building) and adds the IQ transport layer via `RequestFailed`.
 #[derive(Debug, thiserror::Error)]
 pub enum PairError {
@@ -93,9 +93,9 @@ impl Client {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use whatsapp_rust::pair_code::PairCodeOptions;
+    /// use wa_rs::pair_code::PairCodeOptions;
     ///
-    /// # async fn example(client: std::sync::Arc<whatsapp_rust::Client>) -> Result<(), Box<dyn std::error::Error>> {
+    /// # async fn example(client: std::sync::Arc<wa_rs::Client>) -> Result<(), Box<dyn std::error::Error>> {
     /// let options = PairCodeOptions {
     ///     phone_number: "15551234567".to_string(),
     ///     show_push_notification: true,
@@ -168,7 +168,7 @@ impl Client {
             .try_into()
             .expect("ephemeral key is 32 bytes");
 
-        let wrapped_ephemeral = wacore::runtime::blocking(&*self.runtime, move || {
+        let wrapped_ephemeral = wa_rs_core::runtime::blocking(&*self.runtime, move || {
             PairCodeUtils::encrypt_ephemeral_pub(&ephemeral_pub, &code_clone)
         })
         .await;
@@ -192,7 +192,7 @@ impl Client {
         let query = InfoQuery {
             query_type: InfoQueryType::Set,
             namespace: "md",
-            to: Jid::new("", wacore_binary::Server::Pn),
+            to: Jid::new("", wa_rs_binary::Server::Pn),
             target: None,
             content: Some(NodeContent::Nodes(
                 iq_content
@@ -309,7 +309,7 @@ pub(crate) async fn handle_pair_code_notification(
     // Decrypt primary's ephemeral public key (expensive PBKDF2 operation)
     // Run in spawn_blocking to avoid stalling the async runtime
     let pair_code_clone = pair_code.clone();
-    let primary_ephemeral_pub = match wacore::runtime::blocking(&*client.runtime, move || {
+    let primary_ephemeral_pub = match wa_rs_core::runtime::blocking(&*client.runtime, move || {
         PairCodeUtils::decrypt_primary_ephemeral_pub(&primary_wrapped_ephemeral, &pair_code_clone)
     })
     .await
@@ -400,8 +400,8 @@ mod tests {
 
     #[test]
     fn pair_error_paircode_transparent_walks_to_curve_error() {
-        use wacore::libsignal::protocol::CurveError;
-        // Wrap a wacore PairCodeError that itself carries a CurveError source.
+        use wa_rs_core::libsignal::protocol::CurveError;
+        // Wrap a wa_rs_core PairCodeError that itself carries a CurveError source.
         // Because PairError::PairCode is `transparent`, walking source() once
         // skips the transparent layer and lands directly on the CurveError.
         let pe: PairError =

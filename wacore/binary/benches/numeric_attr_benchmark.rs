@@ -4,7 +4,7 @@ use iai_callgrind::{
 use std::hint::black_box;
 
 use compact_str::CompactString;
-use wacore_binary::node::NodeValue;
+use wa_rs_binary::node::NodeValue;
 
 /// Baseline: what the codebase does today — `value.to_string()` then Into<NodeValue>.
 /// Heap-allocates a `String`, then `CompactString::from(String)` re-uses or copies.

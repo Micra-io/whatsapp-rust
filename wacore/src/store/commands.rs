@@ -1,8 +1,8 @@
 use crate::client_profile::ClientProfile;
 use crate::store::Device;
 use crate::store::device::{CachedServerCertChain, DevicePropsOverride};
-use wacore_binary::Jid;
-use waproto::whatsapp as wa;
+use wa_rs_binary::Jid;
+use wa_rs_proto::whatsapp as wa;
 
 #[derive(Debug, Clone)]
 pub enum DeviceCommand {

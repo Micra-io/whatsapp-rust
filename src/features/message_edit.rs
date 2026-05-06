@@ -1,7 +1,7 @@
 //! Decryption of E2E message-edit envelopes (`secret_encrypted_message`
 //! with `secret_enc_type = MESSAGE_EDIT`).
 //!
-//! See [`wacore::message_edit`] for the cryptographic primitives. This
+//! See [`wa_rs_core::message_edit`] for the cryptographic primitives. This
 //! module is the high-level surface: it takes typed [`Jid`]s, normalises
 //! them the same way WA Web does (strip device suffix, optional LID↔PN
 //! fallback) and returns the decrypted inner [`wa::Message`].
@@ -24,9 +24,9 @@
 
 use anyhow::{Result, anyhow};
 use log::warn;
-use wacore::message_edit::{self, MessageEditContext};
-use wacore_binary::Jid;
-use waproto::whatsapp as wa;
+use wa_rs_core::message_edit::{self, MessageEditContext};
+use wa_rs_binary::Jid;
+use wa_rs_proto::whatsapp as wa;
 
 /// Decrypt a `secret_encrypted_message` MESSAGE_EDIT envelope.
 ///
@@ -229,7 +229,7 @@ impl<'a> EncryptedEdit<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore::message_edit::encrypt_message_edit;
+    use wa_rs_core::message_edit::encrypt_message_edit;
 
     fn inner(text: &str) -> wa::Message {
         wa::Message {
@@ -395,7 +395,7 @@ mod tests {
 
     #[test]
     fn fallback_normalising_to_primary_jids_is_skipped() {
-        // wacore::message_edit::decrypt_message_edit_with_fallback returns the
+        // wa_rs_core::message_edit::decrypt_message_edit_with_fallback returns the
         // bare primary error when no fallback is run, or a combined
         // "edit decrypt failed: primary=...; fallback=..." when both attempts
         // run. We use that to assert the dedup path.

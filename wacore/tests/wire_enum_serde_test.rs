@@ -11,14 +11,14 @@
 //! from variant names. Tagged mode is covered end-to-end inside
 //! `stanza::groups::tests`.
 
-use wacore::stanza::business::BusinessNotificationType;
-use wacore::stanza::devices::DeviceNotificationType;
-use wacore::types::events::{
+use wa_rs_core::stanza::business::BusinessNotificationType;
+use wa_rs_core::stanza::devices::DeviceNotificationType;
+use wa_rs_core::types::events::{
     BusinessUpdateType, ConnectFailureReason, DecryptFailMode, DeviceListUpdateType, TempBanReason,
     UnavailableType,
 };
-use wacore::types::lid_pn::LearningSource;
-use wacore::types::message::{AddressingMode, EditAttribute, MessageCategory};
+use wa_rs_core::types::lid_pn::LearningSource;
+use wa_rs_core::types::message::{AddressingMode, EditAttribute, MessageCategory};
 
 fn assert_roundtrip<T>(values: &[T])
 where

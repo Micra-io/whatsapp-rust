@@ -1,6 +1,6 @@
 use crate::libsignal::protocol::{DeviceId, ProtocolAddress};
 use crate::libsignal::store::sender_key_name::SenderKeyName;
-use wacore_binary::{DEFAULT_USER_SERVER, Jid, LEGACY_USER_SERVER};
+use wa_rs_binary::{DEFAULT_USER_SERVER, Jid, LEGACY_USER_SERVER};
 
 /// Real WhatsApp logs show max signal address length of 53 chars.
 /// 64 bytes covers all known addresses without reallocation.

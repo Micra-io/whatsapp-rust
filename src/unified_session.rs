@@ -8,9 +8,9 @@ use log::debug;
 use portable_atomic::{AtomicI64, AtomicU64};
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
-use wacore::ib::{IbStanza, UnifiedSession};
-use wacore::protocol::ProtocolNode;
-use wacore_binary::Node;
+use wa_rs_core::ib::{IbStanza, UnifiedSession};
+use wa_rs_core::protocol::ProtocolNode;
+use wa_rs_binary::Node;
 
 /// Manager for unified session telemetry.
 pub struct UnifiedSessionManager {
@@ -43,12 +43,12 @@ impl UnifiedSessionManager {
     }
 
     /// Update server time offset from node's `t` attribute (Unix timestamp in seconds).
-    pub fn update_server_time_offset(&self, node: &wacore_binary::NodeRef<'_>) {
+    pub fn update_server_time_offset(&self, node: &wa_rs_binary::NodeRef<'_>) {
         if let Some(t_val) = node.get_attr("t").map(|v| v.as_str())
             && let Ok(server_time) = t_val.parse::<i64>()
             && server_time > 0
         {
-            let local_time = wacore::time::now_secs();
+            let local_time = wa_rs_core::time::now_secs();
             let offset_ms = (server_time - local_time) * 1000;
             self.server_time_offset_ms
                 .store(offset_ms, Ordering::Relaxed);
@@ -64,7 +64,7 @@ impl UnifiedSessionManager {
     /// timestamp corresponds to the midpoint of the round trip.
     pub fn update_server_time_offset_with_rtt(
         &self,
-        node: &wacore_binary::NodeRef<'_>,
+        node: &wa_rs_binary::NodeRef<'_>,
         start_time_ms: i64,
         rtt_ms: i64,
     ) {
@@ -130,7 +130,7 @@ impl UnifiedSessionManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn test_manager_default() {
@@ -143,7 +143,7 @@ mod tests {
     fn test_update_server_time_offset() {
         let manager = UnifiedSessionManager::new();
 
-        let server_time = wacore::time::now_secs() + 10;
+        let server_time = wa_rs_core::time::now_secs() + 10;
         let node = NodeBuilder::new("success").attr("t", server_time).build();
 
         manager.update_server_time_offset(&node.as_node_ref());
@@ -234,7 +234,7 @@ mod tests {
         let manager = UnifiedSessionManager::new();
 
         let node = NodeBuilder::new("success")
-            .attr("t", (wacore::time::now_secs() + 10).to_string())
+            .attr("t", (wa_rs_core::time::now_secs() + 10).to_string())
             .build();
         manager.update_server_time_offset(&node.as_node_ref());
         let (_, seq1) = manager.prepare_send().await.unwrap();

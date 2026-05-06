@@ -10,11 +10,11 @@ static ALLOC: dhat::Alloc = dhat::Alloc;
 use e2e_tests::TestClient;
 use log::info;
 use std::io::Read as _;
-use wacore::types::events::Event;
-use whatsapp_rust::Jid;
-use whatsapp_rust::client::MemoryDiagnostics;
-use whatsapp_rust::features::{GroupCreateOptions, GroupParticipantOptions};
-use whatsapp_rust::waproto::whatsapp as wa;
+use wa_rs_core::types::events::Event;
+use wa_rs::Jid;
+use wa_rs::client::MemoryDiagnostics;
+use wa_rs::features::{GroupCreateOptions, GroupParticipantOptions};
+use wa_rs::wa_rs_proto::whatsapp as wa;
 
 /// Read an env var as usize, falling back to the given default.
 fn env_or(var: &str, default: usize) -> usize {
@@ -51,7 +51,7 @@ struct Snapshot {
     heap_bytes: usize,
 }
 
-async fn snapshot(label: &str, round: usize, client: &whatsapp_rust::client::Client) -> Snapshot {
+async fn snapshot(label: &str, round: usize, client: &wa_rs::client::Client) -> Snapshot {
     let diag = client.memory_diagnostics().await;
     let rss = rss_kib();
     #[cfg(feature = "dhat-heap")]

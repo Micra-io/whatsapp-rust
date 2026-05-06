@@ -1,9 +1,9 @@
 use e2e_tests::{TestClient, text_msg};
 use log::info;
-use wacore::types::events::Event;
-use whatsapp_rust::Jid;
-use whatsapp_rust::NodeFilter;
-use whatsapp_rust::features::{
+use wa_rs_core::types::events::Event;
+use wa_rs::Jid;
+use wa_rs::NodeFilter;
+use wa_rs::features::{
     GroupCreateOptions, GroupParticipantOptions, MembershipApprovalMode,
 };
 
@@ -201,7 +201,7 @@ async fn test_group_remove_member() -> anyhow::Result<()> {
 
 /// Helper to find a participant's admin status in group metadata by matching the user part of their JID.
 fn find_participant_admin_status(
-    metadata: &whatsapp_rust::features::GroupMetadata,
+    metadata: &wa_rs::features::GroupMetadata,
     target_jid: &Jid,
 ) -> Option<bool> {
     metadata.participants.iter().find_map(|p| {

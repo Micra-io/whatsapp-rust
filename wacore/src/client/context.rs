@@ -2,8 +2,8 @@ use crate::libsignal::protocol::PreKeyBundle;
 use crate::types::message::AddressingMode;
 use async_trait::async_trait;
 use std::collections::HashMap;
-use wacore_binary::CompactString;
-use wacore_binary::Jid;
+use wa_rs_binary::CompactString;
+use wa_rs_binary::Jid;
 
 fn build_pn_to_lid_map(lid_to_pn_map: &HashMap<CompactString, Jid>) -> HashMap<CompactString, Jid> {
     lid_to_pn_map

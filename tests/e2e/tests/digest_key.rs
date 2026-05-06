@@ -7,7 +7,7 @@
 
 use e2e_tests::TestClient;
 use log::info;
-use wacore::iq::prekeys::DigestKeyBundleSpec;
+use wa_rs_core::iq::prekeys::DigestKeyBundleSpec;
 
 /// Verify that the digest key hash from the server matches the locally
 /// computed hash over identity key + signed prekey + prekey public keys.
@@ -68,14 +68,14 @@ async fn test_digest_key_hash_matches_server() -> anyhow::Result<()> {
             )
         });
 
-        let pk = wacore::prekeys::extract_prekey_public_key(&record_bytes)
+        let pk = wa_rs_core::prekeys::extract_prekey_public_key(&record_bytes)
             .unwrap_or_else(|| panic!("Prekey {} has no public_key field", prekey_id));
         prekey_pubkeys.push(pk.to_vec());
     }
 
     let pubkey_refs: Vec<&[u8]> = prekey_pubkeys.iter().map(|v| v.as_slice()).collect();
     let local_hash =
-        wacore::prekeys::compute_key_bundle_digest(identity_pub, skey_pub, skey_sig, &pubkey_refs);
+        wa_rs_core::prekeys::compute_key_bundle_digest(identity_pub, skey_pub, skey_sig, &pubkey_refs);
 
     assert_eq!(
         local_hash,

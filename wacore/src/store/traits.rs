@@ -12,7 +12,7 @@ use crate::store::error::Result;
 use async_trait::async_trait;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
-use wacore_appstate::processor::AppStateMutationMAC;
+use wa_rs_appstate::processor::AppStateMutationMAC;
 
 /// App state synchronization key for WhatsApp's app state protocol.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

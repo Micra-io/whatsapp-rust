@@ -7,14 +7,14 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::Duration;
 use thiserror::Error;
-use wacore::handshake::{
+use wa_rs_core::handshake::{
     HandshakeError as CoreHandshakeError, IkHandshakeState, IkServerHelloOutcome,
     VerifiedServerCertChain, XxFallbackHandshakeState, XxHandshakeState, build_handshake_header,
 };
-use wacore::noise::NoiseCipher;
-use wacore::runtime::{Runtime, timeout as rt_timeout};
-use wacore::store::DeviceCommand;
-use wacore_binary::consts::WA_CONN_HEADER;
+use wa_rs_core::noise::NoiseCipher;
+use wa_rs_core::runtime::{Runtime, timeout as rt_timeout};
+use wa_rs_core::store::DeviceCommand;
+use wa_rs_binary::consts::WA_CONN_HEADER;
 
 const NOISE_HANDSHAKE_RESPONSE_TIMEOUT: Duration = Duration::from_secs(20);
 
@@ -67,8 +67,8 @@ impl HandshakeError {
         let Self::Core(inner) = self else {
             return false;
         };
-        use wacore::handshake::HandshakeError as Core;
-        use wacore::noise::NoiseError;
+        use wa_rs_core::handshake::HandshakeError as Core;
+        use wa_rs_core::noise::NoiseError;
         match inner {
             // Server-supplied bytes failed AEAD authentication or had the
             // wrong shape — canonical "the static we used to derive ee/se
@@ -113,7 +113,7 @@ enum HandshakePattern {
 }
 
 fn select_pattern(
-    device: &wacore::store::Device,
+    device: &wa_rs_core::store::Device,
     ik_failures: u32,
     now_secs: i64,
 ) -> HandshakePattern {
@@ -148,7 +148,7 @@ struct HandshakeSuccess {
     server_cert_chain: Option<VerifiedServerCertChain>,
 }
 
-fn should_persist_cert_chain(device: &wacore::store::Device) -> bool {
+fn should_persist_cert_chain(device: &wa_rs_core::store::Device) -> bool {
     device.is_registered()
 }
 
@@ -160,7 +160,7 @@ pub async fn do_handshake(
     transport_events: &mut async_channel::Receiver<TransportEvent>,
 ) -> Result<Arc<NoiseSocket>> {
     let device_snapshot = persistence_manager.get_device_snapshot().await;
-    let now_secs = wacore::time::now_secs();
+    let now_secs = wa_rs_core::time::now_secs();
     let pattern = select_pattern(
         &device_snapshot,
         ik_handshake_failures.load(Ordering::Acquire),
@@ -233,14 +233,14 @@ pub async fn do_handshake(
 
 async fn run_xx_handshake(
     runtime: &Arc<dyn Runtime>,
-    device: &wacore::store::Device,
+    device: &wa_rs_core::store::Device,
     transport: Arc<dyn Transport>,
     transport_events: &mut async_channel::Receiver<TransportEvent>,
 ) -> Result<HandshakeSuccess> {
     let client_payload = device.get_client_payload().encode_to_vec();
     let mut handshake_state =
         XxHandshakeState::new(device.noise_key.clone(), client_payload, &WA_CONN_HEADER)?;
-    let mut frame_decoder = wacore::framing::FrameDecoder::new();
+    let mut frame_decoder = wa_rs_core::framing::FrameDecoder::new();
 
     let client_hello_bytes = handshake_state.build_client_hello()?;
     send_first_handshake_message(&transport, device, &client_hello_bytes).await?;
@@ -252,7 +252,7 @@ async fn run_xx_handshake(
         handshake_state.read_server_hello_and_build_client_finish(&resp_frame)?;
 
     debug!("[socket] continueFullHandshakeCore client finish and deriving secrets");
-    let framed = wacore::framing::encode_frame(&client_finish_bytes, None)
+    let framed = wa_rs_core::framing::encode_frame(&client_finish_bytes, None)
         .map_err(HandshakeError::Transport)?;
     transport.send(bytes::Bytes::from(framed)).await?;
 
@@ -270,7 +270,7 @@ async fn run_xx_handshake(
 /// before any operation that could fail.
 async fn run_ik_handshake(
     runtime: &Arc<dyn Runtime>,
-    device: &wacore::store::Device,
+    device: &wa_rs_core::store::Device,
     server_static_pub: [u8; 32],
     transport: Arc<dyn Transport>,
     transport_events: &mut async_channel::Receiver<TransportEvent>,
@@ -283,7 +283,7 @@ async fn run_ik_handshake(
         client_payload,
         &WA_CONN_HEADER,
     )?;
-    let mut frame_decoder = wacore::framing::FrameDecoder::new();
+    let mut frame_decoder = wa_rs_core::framing::FrameDecoder::new();
 
     debug!("[socket] resumeNoiseHandshake send hello");
     let client_hello_bytes = ik.build_client_hello()?;
@@ -313,7 +313,7 @@ async fn run_ik_handshake(
             debug!(
                 "[socket] continueFullHandshakeCore client finish and deriving secrets (XXfallback)"
             );
-            let framed = wacore::framing::encode_frame(&client_finish_bytes, None)
+            let framed = wa_rs_core::framing::encode_frame(&client_finish_bytes, None)
                 .map_err(HandshakeError::Transport)?;
             transport.send(bytes::Bytes::from(framed)).await?;
             let outcome = fb.finish()?;
@@ -329,7 +329,7 @@ async fn run_ik_handshake(
 
 async fn send_first_handshake_message(
     transport: &Arc<dyn Transport>,
-    device: &wacore::store::Device,
+    device: &wa_rs_core::store::Device,
     payload_bytes: &[u8],
 ) -> Result<()> {
     let (header, used_edge_routing) = build_handshake_header(device.edge_routing_info.as_deref());
@@ -338,7 +338,7 @@ async fn send_first_handshake_message(
     } else if device.edge_routing_info.is_some() {
         warn!("Edge routing info provided but not used (possibly too large)");
     }
-    let framed = wacore::framing::encode_frame(payload_bytes, Some(&header))
+    let framed = wa_rs_core::framing::encode_frame(payload_bytes, Some(&header))
         .map_err(HandshakeError::Transport)?;
     transport.send(bytes::Bytes::from(framed)).await?;
     Ok(())
@@ -347,7 +347,7 @@ async fn send_first_handshake_message(
 async fn recv_frame(
     runtime: &Arc<dyn Runtime>,
     transport_events: &mut async_channel::Receiver<TransportEvent>,
-    frame_decoder: &mut wacore::framing::FrameDecoder,
+    frame_decoder: &mut wa_rs_core::framing::FrameDecoder,
 ) -> Result<bytes::BytesMut> {
     loop {
         match rt_timeout(
@@ -376,8 +376,8 @@ async fn recv_frame(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore::store::CachedNoiseCert;
-    use wacore::store::CachedServerCertChain;
+    use wa_rs_core::store::CachedNoiseCert;
+    use wa_rs_core::store::CachedServerCertChain;
 
     fn cached_chain(
         leaf_key: [u8; 32],
@@ -398,8 +398,8 @@ mod tests {
         }
     }
 
-    fn paired_device() -> wacore::store::Device {
-        let mut device = wacore::store::Device::new();
+    fn paired_device() -> wa_rs_core::store::Device {
+        let mut device = wa_rs_core::store::Device::new();
         device.pn = Some("12345@s.whatsapp.net".parse().unwrap());
         device
     }
@@ -478,7 +478,7 @@ mod tests {
 
     #[test]
     fn select_pattern_unregistered_device_returns_xx_even_with_valid_cache() {
-        let mut device = wacore::store::Device::new();
+        let mut device = wa_rs_core::store::Device::new();
         assert!(
             !device.is_registered(),
             "fresh Device::new() must be unpaired"
@@ -492,7 +492,7 @@ mod tests {
 
     #[test]
     fn should_persist_cert_chain_unregistered_returns_false() {
-        let device = wacore::store::Device::new();
+        let device = wa_rs_core::store::Device::new();
         assert!(!device.is_registered());
         assert!(!should_persist_cert_chain(&device));
     }
@@ -546,16 +546,16 @@ mod tests {
     #[test]
     fn xx_and_ik_share_same_first_frame_prologue() {
         // No edge routing: pure WA_CONN_HEADER.
-        let (xx_header, xx_used) = wacore::handshake::build_handshake_header(None);
-        let (ik_header, ik_used) = wacore::handshake::build_handshake_header(None);
+        let (xx_header, xx_used) = wa_rs_core::handshake::build_handshake_header(None);
+        let (ik_header, ik_used) = wa_rs_core::handshake::build_handshake_header(None);
         assert_eq!(xx_header, ik_header);
         assert_eq!(xx_used, ik_used);
         assert!(xx_header.starts_with(b"WA"));
 
         // With edge routing: pre-intro applied identically.
         let routing = vec![0xDE, 0xAD, 0xBE, 0xEF];
-        let (xx_h2, xx_used2) = wacore::handshake::build_handshake_header(Some(&routing));
-        let (ik_h2, ik_used2) = wacore::handshake::build_handshake_header(Some(&routing));
+        let (xx_h2, xx_used2) = wa_rs_core::handshake::build_handshake_header(Some(&routing));
+        let (ik_h2, ik_used2) = wa_rs_core::handshake::build_handshake_header(Some(&routing));
         assert_eq!(xx_h2, ik_h2);
         assert_eq!(xx_used2, ik_used2);
         assert!(xx_used2);

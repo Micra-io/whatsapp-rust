@@ -56,9 +56,9 @@ use crate::request::InfoQuery;
 use anyhow::anyhow;
 use log::warn;
 use std::collections::HashMap;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{Node, NodeContent, NodeContentRef, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{Node, NodeContent, NodeContentRef, NodeRef};
 
 /// Usync mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, WireEnum)]
@@ -442,7 +442,7 @@ impl IqSpec for UserInfoSpec {
     }
 }
 
-// Re-export types from wacore::usync for convenience
+// Re-export types from wa_rs_core::usync for convenience
 pub use crate::usync::{UserDeviceList, UsyncLidMapping};
 
 /// Response from device list query containing device lists and any LID mappings.
@@ -552,13 +552,13 @@ impl IqSpec for DeviceListSpec {
                 .ok_or_else(|| anyhow!("user node missing required 'jid' attribute"))?;
 
             // Extract LID mapping if present
-            if user_jid.server == wacore_binary::Server::Pn
+            if user_jid.server == wa_rs_binary::Server::Pn
                 && let Some(lid_node) = user_node.get_optional_child("lid")
             {
                 let lid_val = lid_node.attrs().optional_string("val").unwrap_or_default();
                 if !lid_val.is_empty()
                     && let Ok(lid_jid) = lid_val.parse::<Jid>()
-                    && lid_jid.server == wacore_binary::Server::Lid
+                    && lid_jid.server == wa_rs_binary::Server::Lid
                 {
                     lid_mappings.push(UsyncLidMapping {
                         phone_number: user_jid.user.clone(),
@@ -722,14 +722,14 @@ mod tests {
     fn build_test_key_index_list_node(device_ids: &[u16]) -> Node {
         use prost::Message;
         let valid_indexes: Vec<u32> = device_ids.iter().map(|&id| id as u32).collect();
-        let key_index = waproto::whatsapp::AdvKeyIndexList {
+        let key_index = wa_rs_proto::whatsapp::AdvKeyIndexList {
             raw_id: Some(1),
             timestamp: Some(1000),
             current_index: Some(valid_indexes.iter().copied().max().unwrap_or(0)),
             valid_indexes,
             account_type: None,
         };
-        let signed = waproto::whatsapp::AdvSignedKeyIndexList {
+        let signed = wa_rs_proto::whatsapp::AdvSignedKeyIndexList {
             details: Some(key_index.encode_to_vec()),
             account_signature: None,
             account_signature_key: None,

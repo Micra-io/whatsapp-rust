@@ -4,9 +4,9 @@ use crate::WireEnum;
 use crate::iq::node::optional_attr;
 use crate::iq::spec::IqSpec;
 use crate::request::InfoQuery;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{NodeContent, NodeContentRef, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{NodeContent, NodeContentRef, NodeRef};
 
 #[derive(Debug, Clone, PartialEq, Eq, WireEnum)]
 pub enum DayOfWeek {

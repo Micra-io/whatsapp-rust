@@ -3,17 +3,17 @@ use crate::mediaconn::{MEDIA_AUTH_REFRESH_RETRY_ATTEMPTS, MediaConn, is_media_au
 use anyhow::{Result, anyhow};
 use std::io::{Seek, SeekFrom, Write};
 
-pub use wacore::download::{
+pub use wa_rs_core::download::{
     DownloadUtils, Downloadable, MediaDecryption, MediaDecryptionError, MediaType,
 };
 
-impl From<&MediaConn> for wacore::download::MediaConnection {
+impl From<&MediaConn> for wa_rs_core::download::MediaConnection {
     fn from(conn: &MediaConn) -> Self {
-        wacore::download::MediaConnection {
+        wa_rs_core::download::MediaConnection {
             hosts: conn
                 .hosts
                 .iter()
-                .map(|h| wacore::download::MediaHost {
+                .map(|h| wa_rs_core::download::MediaHost {
                     hostname: h.hostname.clone(),
                 })
                 .collect(),
@@ -109,10 +109,10 @@ async fn download_media_with_retry<
 where
     PrepareRequests: FnMut(bool) -> PrepareRequestsFut,
     PrepareRequestsFut:
-        std::future::Future<Output = Result<Vec<wacore::download::DownloadRequest>>>,
+        std::future::Future<Output = Result<Vec<wa_rs_core::download::DownloadRequest>>>,
     InvalidateMediaConn: FnMut() -> InvalidateMediaConnFut,
     InvalidateMediaConnFut: std::future::Future<Output = ()>,
-    ExecuteRequest: FnMut(wacore::download::DownloadRequest) -> ExecuteRequestFut,
+    ExecuteRequest: FnMut(wa_rs_core::download::DownloadRequest) -> ExecuteRequestFut,
     ExecuteRequestFut:
         std::future::Future<Output = std::result::Result<Vec<u8>, DownloadRequestError>>,
 {
@@ -176,10 +176,10 @@ where
     W: Write + Seek + Send + 'static,
     PrepareRequests: FnMut(bool) -> PrepareRequestsFut,
     PrepareRequestsFut:
-        std::future::Future<Output = Result<Vec<wacore::download::DownloadRequest>>>,
+        std::future::Future<Output = Result<Vec<wa_rs_core::download::DownloadRequest>>>,
     InvalidateMediaConn: FnMut() -> InvalidateMediaConnFut,
     InvalidateMediaConnFut: std::future::Future<Output = ()>,
-    ExecuteRequest: FnMut(wacore::download::DownloadRequest, W) -> ExecuteRequestFut,
+    ExecuteRequest: FnMut(wa_rs_core::download::DownloadRequest, W) -> ExecuteRequestFut,
     ExecuteRequestFut:
         std::future::Future<Output = Result<(W, std::result::Result<(), DownloadRequestError>)>>,
 {
@@ -277,15 +277,15 @@ impl Client {
         &self,
         downloadable: &dyn Downloadable,
         force_refresh: bool,
-    ) -> Result<Vec<wacore::download::DownloadRequest>> {
+    ) -> Result<Vec<wa_rs_core::download::DownloadRequest>> {
         let media_conn = self.refresh_media_conn(force_refresh).await?;
-        let core_media_conn = wacore::download::MediaConnection::from(&media_conn);
+        let core_media_conn = wa_rs_core::download::MediaConnection::from(&media_conn);
         DownloadUtils::prepare_download_requests(downloadable, &core_media_conn)
     }
 
     async fn download_with_request(
         &self,
-        request: &wacore::download::DownloadRequest,
+        request: &wa_rs_core::download::DownloadRequest,
     ) -> std::result::Result<Vec<u8>, DownloadRequestError> {
         let url = request.url.clone();
         let decryption = request.decryption.clone();
@@ -313,14 +313,14 @@ impl Client {
             MediaDecryption::Encrypted {
                 media_key,
                 media_type,
-            } => wacore::runtime::blocking(&*self.runtime, move || {
+            } => wa_rs_core::runtime::blocking(&*self.runtime, move || {
                 DownloadUtils::decrypt_stream(&response.body[..], &media_key, media_type)
             })
             .await
             .map_err(DownloadRequestError::other),
             MediaDecryption::Plaintext { file_sha256 } => {
                 let body = response.body;
-                wacore::runtime::blocking(&*self.runtime, move || {
+                wa_rs_core::runtime::blocking(&*self.runtime, move || {
                     DownloadUtils::validate_plaintext_sha256(&body, &file_sha256)?;
                     Ok::<Vec<u8>, anyhow::Error>(body)
                 })
@@ -396,7 +396,7 @@ impl Client {
     /// falls back to buffered otherwise. Returns writer for retry.
     async fn streaming_download_and_decrypt<W: Write + Seek + Send + 'static>(
         &self,
-        request: &wacore::download::DownloadRequest,
+        request: &wa_rs_core::download::DownloadRequest,
         writer: W,
     ) -> Result<(W, std::result::Result<(), DownloadRequestError>)> {
         if !self.http_client.supports_streaming() {
@@ -407,7 +407,7 @@ impl Client {
         let url = request.url.clone();
         let decryption = request.decryption.clone();
 
-        Ok(wacore::runtime::blocking(&*self.runtime, move || {
+        Ok(wa_rs_core::runtime::blocking(&*self.runtime, move || {
             let mut writer = writer;
 
             if let Err(e) = writer.seek(SeekFrom::Start(0)) {
@@ -469,7 +469,7 @@ impl Client {
     /// Buffered fallback when streaming is not available.
     async fn buffered_download_and_decrypt<W: Write + Seek + Send + 'static>(
         &self,
-        request: &wacore::download::DownloadRequest,
+        request: &wa_rs_core::download::DownloadRequest,
         mut writer: W,
     ) -> Result<(W, std::result::Result<(), DownloadRequestError>)> {
         let http_request = crate::http::HttpRequest::get(request.url.clone());
@@ -495,7 +495,7 @@ impl Client {
         let decryption = request.decryption.clone();
 
         // Offload blocking decrypt+write to avoid stalling the async executor
-        Ok(wacore::runtime::blocking(&*self.runtime, move || {
+        Ok(wa_rs_core::runtime::blocking(&*self.runtime, move || {
             if let Err(e) = writer.seek(SeekFrom::Start(0)) {
                 return (writer, Err(DownloadRequestError::other(e)));
             }
@@ -543,7 +543,7 @@ mod tests {
     use async_lock::Mutex;
     use std::io::Cursor;
     use std::sync::Arc;
-    use wacore::time::Instant;
+    use wa_rs_core::time::Instant;
 
     struct PlaintextDownloadable {
         direct_path: String,
@@ -590,7 +590,7 @@ mod tests {
     }
 
     fn plaintext_sha256(data: &[u8]) -> Vec<u8> {
-        wacore::upload::encrypt_media(data, MediaType::Image)
+        wa_rs_core::upload::encrypt_media(data, MediaType::Image)
             .expect("hash derivation should succeed")
             .file_sha256
             .to_vec()
@@ -599,7 +599,7 @@ mod tests {
     #[test]
     fn process_downloaded_media_ok() {
         let data = b"Hello media test";
-        let enc = wacore::upload::encrypt_media(data, MediaType::Image)
+        let enc = wa_rs_core::upload::encrypt_media(data, MediaType::Image)
             .expect("encryption should succeed");
         let mut cursor = Cursor::new(Vec::<u8>::new());
         let plaintext = DownloadUtils::verify_and_decrypt(
@@ -615,7 +615,7 @@ mod tests {
     #[test]
     fn process_downloaded_media_bad_mac() {
         let data = b"Tamper";
-        let mut enc = wacore::upload::encrypt_media(data, MediaType::Image)
+        let mut enc = wa_rs_core::upload::encrypt_media(data, MediaType::Image)
             .expect("encryption should succeed");
         let last = enc.data_to_upload.len() - 1;
         enc.data_to_upload[last] ^= 0x01;
@@ -628,7 +628,7 @@ mod tests {
         .unwrap_err();
 
         assert!(
-            matches!(&err, wacore::download::MediaDecryptionError::InvalidMac),
+            matches!(&err, wa_rs_core::download::MediaDecryptionError::InvalidMac),
             "Expected InvalidMac, got: {}",
             err
         );
@@ -660,7 +660,7 @@ mod tests {
                         let media_conn = if force { refreshed_conn } else { first_conn };
                         DownloadUtils::prepare_download_requests(
                             downloadable,
-                            &wacore::download::MediaConnection::from(&media_conn),
+                            &wa_rs_core::download::MediaConnection::from(&media_conn),
                         )
                     }
                 }
@@ -732,7 +732,7 @@ mod tests {
                         let media_conn = if force { refreshed_conn } else { first_conn };
                         DownloadUtils::prepare_download_requests(
                             downloadable,
-                            &wacore::download::MediaConnection::from(&media_conn),
+                            &wa_rs_core::download::MediaConnection::from(&media_conn),
                         )
                     }
                 }

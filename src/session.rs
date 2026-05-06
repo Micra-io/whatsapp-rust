@@ -1,5 +1,5 @@
-// Re-export from wacore — the canonical implementation lives there now.
-pub use wacore::session::{SESSION_CHECK_BATCH_SIZE, SessionError, SessionManager, SessionResult};
+// Re-export from wa_rs_core — the canonical implementation lives there now.
+pub use wa_rs_core::session::{SESSION_CHECK_BATCH_SIZE, SessionError, SessionManager, SessionResult};
 
 #[cfg(test)]
 mod tests {
@@ -7,7 +7,7 @@ mod tests {
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::Duration;
-    use wacore_binary::Jid;
+    use wa_rs_binary::Jid;
 
     fn make_jid(user: &str) -> Jid {
         Jid::pn(user)

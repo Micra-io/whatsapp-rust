@@ -47,7 +47,7 @@ impl StanzaRouter {
     pub async fn dispatch(
         &self,
         client: Arc<Client>,
-        node: Arc<wacore_binary::OwnedNodeRef>,
+        node: Arc<wa_rs_binary::OwnedNodeRef>,
         cancelled: &mut bool,
     ) -> bool {
         if let Some(handler) = self.handlers.get(node.tag()) {
@@ -74,8 +74,8 @@ mod tests {
     use super::*;
     use crate::test_utils::MockHttpClient;
     use std::sync::Arc;
-    use wacore_binary::OwnedNodeRef;
-    use wacore_binary::{Attrs, Node, NodeContent};
+    use wa_rs_binary::OwnedNodeRef;
+    use wa_rs_binary::{Attrs, Node, NodeContent};
 
     #[derive(Debug)]
     struct MockHandler {

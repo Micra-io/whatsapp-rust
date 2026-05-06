@@ -1,6 +1,6 @@
 use thiserror::Error;
-use wacore::handshake::NoiseError;
-use wacore_binary::error::BinaryError;
+use wa_rs_core::handshake::NoiseError;
+use wa_rs_binary::error::BinaryError;
 
 #[derive(Debug, Error)]
 pub enum SocketError {
@@ -86,7 +86,7 @@ impl EncryptSendError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore::libsignal::crypto::CryptoProviderError;
+    use wa_rs_core::libsignal::crypto::CryptoProviderError;
 
     #[test]
     fn cipher_preserves_noise_source_through_socket_error() {

@@ -6,14 +6,14 @@ use prost::Message;
 
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
-use wacore::companion_reg::companion_web_client_type_for_props;
-use wacore::libsignal::protocol::KeyPair;
-use wacore_binary::NodeRef;
-use wacore_binary::{Jid, SERVER_JID};
-use waproto::whatsapp as wa;
+use wa_rs_core::companion_reg::companion_web_client_type_for_props;
+use wa_rs_core::libsignal::protocol::KeyPair;
+use wa_rs_binary::NodeRef;
+use wa_rs_binary::{Jid, SERVER_JID};
+use wa_rs_proto::whatsapp as wa;
 
-pub use wacore::companion_reg::{CompanionWebClientType, NATIVE_CAMERA_DEEP_LINK_PREFIX};
-pub use wacore::pair::{DeviceState, PairCryptoError, PairUtils};
+pub use wa_rs_core::companion_reg::{CompanionWebClientType, NATIVE_CAMERA_DEEP_LINK_PREFIX};
+pub use wa_rs_core::pair::{DeviceState, PairCryptoError, PairUtils};
 
 /// Auto-derives client type from `device_props`; see
 /// [`make_qr_data_with_client_type`] to override.
@@ -160,7 +160,7 @@ async fn handle_pair_success<'a>(
     }
 
     // Clear pair code state if active
-    *client.pair_code_state.lock().await = wacore::pair_code::PairCodeState::Completed;
+    *client.pair_code_state.lock().await = wa_rs_core::pair_code::PairCodeState::Completed;
 
     client.update_server_time_offset(request_node);
 

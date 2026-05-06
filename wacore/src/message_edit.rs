@@ -61,7 +61,7 @@ impl<'a> MessageEditContext<'a> {
 /// `inner_message` is the full `Message` proto whose `protocolMessage.editedMessage`
 /// carries the new content; it gets serialised and encrypted in one shot.
 pub fn encrypt_message_edit(
-    inner_message: &waproto::whatsapp::Message,
+    inner_message: &wa_rs_proto::whatsapp::Message,
     message_secret: &[u8],
     ctx: &MessageEditContext<'_>,
 ) -> Result<(Vec<u8>, [u8; IV_SIZE])> {
@@ -82,7 +82,7 @@ pub fn decrypt_message_edit(
     iv: &[u8],
     message_secret: &[u8],
     ctx: &MessageEditContext<'_>,
-) -> Result<waproto::whatsapp::Message> {
+) -> Result<wa_rs_proto::whatsapp::Message> {
     if iv.len() != IV_SIZE {
         return Err(anyhow!(
             "Invalid edit IV length: expected {IV_SIZE}, got {}",
@@ -90,7 +90,7 @@ pub fn decrypt_message_edit(
         ));
     }
     let plaintext = decrypt_addon(enc_payload, iv, message_secret, &ctx.as_addon_ctx())?;
-    let msg = waproto::whatsapp::Message::decode(&plaintext[..])
+    let msg = wa_rs_proto::whatsapp::Message::decode(&plaintext[..])
         .map_err(|e| anyhow!("Failed to decode inner edit Message: {e}"))?;
     Ok(msg)
 }
@@ -109,7 +109,7 @@ pub fn decrypt_message_edit_with_fallback(
     message_secret: &[u8],
     primary: &MessageEditContext<'_>,
     fallback: Option<&MessageEditContext<'_>>,
-) -> Result<waproto::whatsapp::Message> {
+) -> Result<wa_rs_proto::whatsapp::Message> {
     match decrypt_message_edit(enc_payload, iv, message_secret, primary) {
         Ok(m) => Ok(m),
         Err(primary_err) => match fallback {
@@ -126,7 +126,7 @@ pub fn decrypt_message_edit_with_fallback(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use waproto::whatsapp as wa;
+    use wa_rs_proto::whatsapp as wa;
 
     fn make_inner_edit(new_text: &str) -> wa::Message {
         wa::Message {

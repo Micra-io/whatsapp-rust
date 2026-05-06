@@ -3,9 +3,9 @@
 use anyhow::Result;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
-use wacore::libsignal::store::SessionStore;
-use wacore::types::jid::JidExt;
-use wacore_binary::Jid;
+use wa_rs_core::libsignal::store::SessionStore;
+use wa_rs_core::types::jid::JidExt;
+use wa_rs_binary::Jid;
 
 use super::Client;
 use crate::types::events::{Event, OfflineSyncCompleted};
@@ -63,7 +63,7 @@ impl Client {
             return;
         }
 
-        if wacore::runtime::timeout(&*self.runtime, timeout, offline_fut)
+        if wa_rs_core::runtime::timeout(&*self.runtime, timeout, offline_fut)
             .await
             .is_err()
         {
@@ -117,7 +117,7 @@ impl Client {
 
     pub async fn wait_for_startup_sync(&self, timeout: std::time::Duration) -> Result<()> {
         use anyhow::anyhow;
-        use wacore::time::Instant;
+        use wa_rs_core::time::Instant;
 
         let deadline = Instant::now() + timeout;
 
@@ -126,7 +126,7 @@ impl Client {
         let offline_fut = self.offline_sync_notifier.listen();
         if !self.offline_sync_completed.load(Ordering::Relaxed) {
             let remaining = deadline.saturating_duration_since(Instant::now());
-            wacore::runtime::timeout(&*self.runtime, remaining, offline_fut)
+            wa_rs_core::runtime::timeout(&*self.runtime, remaining, offline_fut)
                 .await
                 .map_err(|_| anyhow!("Timeout waiting for offline sync completion"))?;
         }
@@ -138,7 +138,7 @@ impl Client {
             }
 
             let remaining = deadline.saturating_duration_since(Instant::now());
-            wacore::runtime::timeout(&*self.runtime, remaining, history_fut)
+            wa_rs_core::runtime::timeout(&*self.runtime, remaining, history_fut)
                 .await
                 .map_err(|_| anyhow!("Timeout waiting for history sync tasks to become idle"))?;
         }
@@ -168,7 +168,7 @@ impl Client {
 
     /// Core session-check + prekey-fetch logic shared by both entry points.
     async fn ensure_sessions_inner(&self, jids: Vec<Jid>) -> Result<()> {
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::types::jid::JidExt;
 
         let device_store = self.persistence_manager.get_device_arc().await;
         let mut jids_needing_sessions = Vec::with_capacity(jids.len());
@@ -204,15 +204,15 @@ impl Client {
     /// Fetch prekeys and establish sessions for a batch of JIDs.
     /// Returns the number of sessions successfully established.
     async fn fetch_and_establish_sessions(&self, jids: &[Jid]) -> Result<usize, anyhow::Error> {
-        use wacore::libsignal::protocol::{UsePQRatchet, process_prekey_bundle};
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::libsignal::protocol::{UsePQRatchet, process_prekey_bundle};
+        use wa_rs_core::types::jid::JidExt;
 
         if jids.is_empty() {
             return Ok(0);
         }
 
         let prekey_bundles = self
-            .fetch_pre_keys(jids, Some(wacore::iq::prekeys::PreKeyFetchReason::Identity))
+            .fetch_pre_keys(jids, Some(wa_rs_core::iq::prekeys::PreKeyFetchReason::Identity))
             .await?;
 
         let mut adapter = self.signal_adapter().await;
@@ -332,7 +332,7 @@ impl Client {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::{JidExt, Server};
+    use wa_rs_binary::{JidExt, Server};
 
     #[test]
     fn test_primary_phone_jid_creation_from_pn() {
@@ -472,7 +472,7 @@ mod tests {
     /// Protocol address format: {user}[:device]@{server}.0
     #[test]
     fn test_protocol_address_format_for_session_lookup() {
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::types::jid::JidExt;
 
         let pn = Jid::pn("559999999999").with_device(0);
         let addr = pn.to_protocol_address();
@@ -540,7 +540,7 @@ mod tests {
         assert_ne!(pn_address.user, lid_address.user);
         assert_ne!(pn_address.server, lid_address.server);
 
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::types::jid::JidExt;
         let pn_signal_addr = pn_address.to_protocol_address();
         let lid_signal_addr = lid_address.to_protocol_address();
 
@@ -608,10 +608,10 @@ mod tests {
     #[test]
     fn test_session_establishment_lookup_normalization() {
         use std::collections::HashMap;
-        use wacore_binary::Jid;
+        use wa_rs_binary::Jid;
 
         // Represents the bundle map returned by fetch_pre_keys
-        // (keys are normalized by parsing logic as verified in wacore/src/prekeys.rs)
+        // (keys are normalized by parsing logic as verified in wa_rs_core/src/prekeys.rs)
         let mut prekey_bundles: HashMap<Jid, ()> = HashMap::new(); // Using () as mock bundle placeholder
 
         let normalized_jid = Jid::lid("123456789"); // agent=0

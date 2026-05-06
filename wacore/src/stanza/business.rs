@@ -4,8 +4,8 @@
 
 use anyhow::{Result, anyhow};
 use serde::Serialize;
-use wacore_binary::Jid;
-use wacore_binary::NodeRef;
+use wa_rs_binary::Jid;
+use wa_rs_binary::NodeRef;
 
 /// Business notification type based on child element.
 #[derive(Debug, Clone, PartialEq, Eq, crate::WireEnum)]
@@ -45,7 +45,7 @@ pub struct VerifiedName {
 
 impl VerifiedName {
     pub fn try_from_node(node: &NodeRef<'_>) -> Result<Self> {
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
         let name = node
             .attrs()
             .optional_string("name")
@@ -176,7 +176,7 @@ impl BusinessNotification {
         Vec<String>,
         Vec<BusinessSubscription>,
     )> {
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
 
         if let Some(remove_node) = node.get_optional_child("remove") {
             if let Some(jid) = remove_node.attrs().optional_jid("jid") {
@@ -368,7 +368,7 @@ impl BusinessNotification {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn test_parse_remove_jid_notification() {

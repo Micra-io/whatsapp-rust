@@ -14,7 +14,7 @@ use crate::store::traits::*;
 use async_lock::Mutex;
 use async_trait::async_trait;
 use bytes::Bytes;
-use wacore_appstate::processor::AppStateMutationMAC;
+use wa_rs_appstate::processor::AppStateMutationMAC;
 
 /// Key for the sent-message store: `(chat_jid, message_id)`.
 type SentMessageKey = (String, String);

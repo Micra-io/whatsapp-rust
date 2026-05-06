@@ -3,15 +3,15 @@
 //! Encryption, decryption, session management, and participant node creation.
 
 use anyhow::{Result, anyhow};
-use wacore::libsignal::protocol::{
+use wa_rs_core::libsignal::protocol::{
     CiphertextMessage, PreKeySignalMessage, SignalMessage, UsePQRatchet, message_decrypt,
     message_encrypt,
 };
-use wacore::message_processing::EncType;
-use wacore::messages::MessageUtils;
-use wacore::types::jid::{JidExt, make_sender_key_name};
-use wacore_binary::Jid;
-use wacore_binary::Node;
+use wa_rs_core::message_processing::EncType;
+use wa_rs_core::messages::MessageUtils;
+use wa_rs_core::types::jid::{JidExt, make_sender_key_name};
+use wa_rs_binary::Jid;
+use wa_rs_binary::Node;
 
 use crate::client::Client;
 
@@ -52,7 +52,7 @@ impl<'a> Signal<'a> {
         drop(_guard);
         self.client.flush_signal_cache().await?;
 
-        let (_, is_prekey, bytes) = wacore::send::extract_ciphertext(encrypted)
+        let (_, is_prekey, bytes) = wa_rs_core::send::extract_ciphertext(encrypted)
             .ok_or_else(|| anyhow!("unexpected ciphertext variant"))?;
         let enc_type = if is_prekey {
             EncType::PreKeyMessage
@@ -148,7 +148,7 @@ impl<'a> Signal<'a> {
 
         let skdm_bytes = if !key_exists {
             Some(
-                wacore::send::create_sender_key_distribution_message_for_group(
+                wa_rs_core::send::create_sender_key_distribution_message_for_group(
                     &mut adapter.sender_key_store,
                     group_jid,
                     &sender_addr,
@@ -159,7 +159,7 @@ impl<'a> Signal<'a> {
             None
         };
 
-        let ciphertext = wacore::send::encrypt_group_message(
+        let ciphertext = wa_rs_core::send::encrypt_group_message(
             &mut adapter.sender_key_store,
             group_jid,
             &sender_addr,
@@ -191,7 +191,7 @@ impl<'a> Signal<'a> {
 
         let mut adapter = self.client.signal_adapter().await;
 
-        let plaintext = wacore::libsignal::protocol::group_decrypt(
+        let plaintext = wa_rs_core::libsignal::protocol::group_decrypt(
             ciphertext,
             &mut adapter.sender_key_store,
             &sender_key_name,
@@ -253,7 +253,7 @@ impl<'a> Signal<'a> {
     pub async fn create_participant_nodes(
         &self,
         recipient_jids: &[Jid],
-        message: &waproto::whatsapp::Message,
+        message: &wa_rs_proto::whatsapp::Message,
     ) -> Result<(Vec<Node>, bool)> {
         let device_jids = self.client.get_user_devices(recipient_jids).await?;
         self.client.ensure_e2e_sessions(&device_jids).await?;
@@ -268,11 +268,11 @@ impl<'a> Signal<'a> {
 
         let plaintext = MessageUtils::encode_and_pad(message);
         let mut adapter = self.client.signal_adapter().await;
-        let mediatype = wacore::send::media_type_from_message(message);
-        let hide_decrypt_fail = wacore::send::should_hide_decrypt_fail(message);
+        let mediatype = wa_rs_core::send::media_type_from_message(message);
+        let hide_decrypt_fail = wa_rs_core::send::should_hide_decrypt_fail(message);
 
         let mut stores = adapter.as_signal_stores();
-        let result = wacore::send::encrypt_for_devices(
+        let result = wa_rs_core::send::encrypt_for_devices(
             &*self.client.runtime,
             &mut stores,
             self.client,

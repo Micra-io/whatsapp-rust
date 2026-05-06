@@ -30,10 +30,10 @@ use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
 use rand::RngExt;
 use sha2::Sha256;
-use wacore_binary::SERVER_JID;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Node, NodeContentRef, NodeRef};
-use waproto::whatsapp as wa;
+use wa_rs_binary::SERVER_JID;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Node, NodeContentRef, NodeRef};
+use wa_rs_proto::whatsapp as wa;
 
 // Type aliases
 type Aes256Ctr = Ctr128BE<aes::Aes256>;
@@ -486,9 +486,9 @@ impl PairCodeUtils {
     }
 }
 
-/// Errors raised by wacore-side pair-code validation, key derivation, and
+/// Errors raised by wa_rs_core-side pair-code validation, key derivation, and
 /// protocol-bundle building. The high-level crate wraps this in
-/// `whatsapp_rust::pair_code::PairError` and adds an IQ-failure variant for the
+/// `wa_rs::pair_code::PairError` and adds an IQ-failure variant for the
 /// transport layer.
 #[derive(Debug, thiserror::Error)]
 pub enum PairCodeError {
@@ -538,7 +538,7 @@ pub enum PairCodeError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::NodeContent;
+    use wa_rs_binary::NodeContent;
 
     #[test]
     fn test_generate_code() {

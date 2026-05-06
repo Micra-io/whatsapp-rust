@@ -1,6 +1,6 @@
 use e2e_tests::TestClient;
 use log::info;
-use wacore::types::events::Event;
+use wa_rs_core::types::events::Event;
 
 /// Requires mock server with CHATSTATE_TTL_SECS=3 (so TTL expires before the ~5s reconnect).
 #[tokio::test]

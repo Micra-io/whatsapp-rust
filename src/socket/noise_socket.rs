@@ -5,8 +5,8 @@ use bytes::BytesMut;
 use futures::channel::oneshot;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
-use wacore::handshake::NoiseCipher;
-use wacore::runtime::{AbortHandle, Runtime};
+use wa_rs_core::handshake::NoiseCipher;
+use wa_rs_core::runtime::{AbortHandle, Runtime};
 
 const INLINE_ENCRYPT_THRESHOLD: usize = 16 * 1024;
 
@@ -116,14 +116,14 @@ impl NoiseSocket {
                 return Err(EncryptSendError::crypto(anyhow::anyhow!(e.to_string())));
             }
 
-            if let Err(e) = wacore::framing::encode_frame_into(enc_buf, None, out_buf) {
+            if let Err(e) = wa_rs_core::framing::encode_frame_into(enc_buf, None, out_buf) {
                 return Err(EncryptSendError::framing(e));
             }
         } else {
             let write_key = write_key.clone();
             let plaintext_owned = plaintext.to_vec();
 
-            let encrypt_result = wacore::runtime::blocking(&**runtime, move || {
+            let encrypt_result = wa_rs_core::runtime::blocking(&**runtime, move || {
                 write_key.encrypt_with_counter(counter, &plaintext_owned)
             })
             .await;
@@ -135,7 +135,7 @@ impl NoiseSocket {
                 }
             };
 
-            if let Err(e) = wacore::framing::encode_frame_into(&ciphertext, None, out_buf) {
+            if let Err(e) = wa_rs_core::framing::encode_frame_into(&ciphertext, None, out_buf) {
                 return Err(EncryptSendError::framing(e));
             }
         }

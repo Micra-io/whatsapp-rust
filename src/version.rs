@@ -5,7 +5,7 @@ use anyhow::{Result, anyhow};
 use log::debug;
 use std::sync::Arc;
 
-pub use wacore::version::parse_sw_js;
+pub use wa_rs_core::version::parse_sw_js;
 
 const SW_URL: &str = "https://web.whatsapp.com/sw.js";
 
@@ -49,9 +49,9 @@ pub async fn resolve_and_update_version(
     let needs_fetch = if last_fetched_ms == 0 {
         true
     } else {
-        match wacore::time::from_millis(last_fetched_ms) {
+        match wa_rs_core::time::from_millis(last_fetched_ms) {
             Some(last_fetched_dt) => {
-                wacore::time::now_utc().signed_duration_since(last_fetched_dt)
+                wa_rs_core::time::now_utc().signed_duration_since(last_fetched_dt)
                     > chrono::Duration::hours(24)
             }
             None => true,

@@ -3,23 +3,23 @@ use crate::message::RetryReason;
 use crate::types::events::Receipt;
 use log::{debug, info, warn};
 use prost::Message;
-use wacore::types::message::MessageCategory;
+use wa_rs_core::types::message::MessageCategory;
 
 use scopeguard;
 use std::sync::Arc;
-use wacore::iq::prekeys::{OneTimePreKeyNode, SignedPreKeyNode};
-use wacore::libsignal::protocol::{
+use wa_rs_core::iq::prekeys::{OneTimePreKeyNode, SignedPreKeyNode};
+use wa_rs_core::libsignal::protocol::{
     KeyPair, PreKeyBundle, PublicKey, UsePQRatchet, process_prekey_bundle,
 };
-use wacore::libsignal::store::PreKeyStore;
-use wacore::protocol::ProtocolNode;
-use wacore::types::jid::JidExt;
-use wacore_binary::JidExt as _;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, OwnedNodeRef};
+use wa_rs_core::libsignal::store::PreKeyStore;
+use wa_rs_core::protocol::ProtocolNode;
+use wa_rs_core::types::jid::JidExt;
+use wa_rs_binary::JidExt as _;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, OwnedNodeRef};
 #[cfg(test)]
-use wacore_binary::{Node, NodeContent};
-use wacore_binary::{NodeContentRef, NodeRef};
+use wa_rs_binary::{Node, NodeContent};
+use wa_rs_binary::{NodeContentRef, NodeRef};
 
 /// Helper to extract bytes content from a Node (used in tests).
 #[cfg(test)]
@@ -344,10 +344,10 @@ impl Client {
                 // delete only that namespace; otherwise both.
                 let addressing_mode = cached_group_info.as_ref().map(|g| g.addressing_mode);
                 let jids_to_delete: Vec<_> = match addressing_mode {
-                    Some(wacore::types::message::AddressingMode::Lid) => {
+                    Some(wa_rs_core::types::message::AddressingMode::Lid) => {
                         device_snapshot.lid.as_ref().into_iter().collect()
                     }
-                    Some(wacore::types::message::AddressingMode::Pn) => {
+                    Some(wa_rs_core::types::message::AddressingMode::Pn) => {
                         device_snapshot.pn.as_ref().into_iter().collect()
                     }
                     None => device_snapshot
@@ -359,7 +359,7 @@ impl Client {
                 };
 
                 for own_jid in jids_to_delete {
-                    use wacore::libsignal::store::sender_key_name::SenderKeyName;
+                    use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
                     let sk_name = SenderKeyName::from_parts(
                         &group_jid,
                         own_jid.to_protocol_address().as_str(),
@@ -435,8 +435,8 @@ impl Client {
             let mut store_adapter = self.signal_adapter().await;
 
             let edit_attr =
-                wacore::types::message::EditAttribute::infer_from_message(&original_msg);
-            let stanza = wacore::send::prepare_group_retry_stanza(
+                wa_rs_core::types::message::EditAttribute::infer_from_message(&original_msg);
+            let stanza = wa_rs_core::send::prepare_group_retry_stanza(
                 &mut store_adapter.session_store,
                 &mut store_adapter.identity_store,
                 info.chat,
@@ -468,8 +468,8 @@ impl Client {
             let mut store_adapter = self.signal_adapter().await;
 
             let edit_attr =
-                wacore::types::message::EditAttribute::infer_from_message(&original_msg);
-            let stanza = wacore::send::prepare_dm_retry_stanza(
+                wa_rs_core::types::message::EditAttribute::infer_from_message(&original_msg);
+            let stanza = wa_rs_core::send::prepare_dm_retry_stanza(
                 &mut store_adapter.session_store,
                 &mut store_adapter.identity_store,
                 info.original_from,
@@ -683,7 +683,7 @@ impl Client {
     async fn process_retry_key_bundle(
         &self,
         node: &NodeRef<'_>,
-        requester_jid: &wacore_binary::Jid,
+        requester_jid: &wa_rs_binary::Jid,
         is_peer: bool,
     ) -> Result<(), anyhow::Error> {
         let keys_node = node
@@ -882,13 +882,13 @@ impl Client {
             .bytes(registration_id_bytes)
             .build();
 
-        let keys_node = if wacore::protocol::retry::should_include_keys(retry_count, reason) {
+        let keys_node = if wa_rs_core::protocol::retry::should_include_keys(retry_count, reason) {
             let device_store = self.persistence_manager.get_device_arc().await;
             let device_guard = device_store.read().await;
 
             let new_prekey_id = (rand::random::<u32>() % 16777215) + 1;
             let new_prekey_keypair = KeyPair::generate(&mut rand::make_rng::<rand::rngs::StdRng>());
-            let new_prekey_record = wacore::libsignal::store::record_helpers::new_pre_key_record(
+            let new_prekey_record = wa_rs_core::libsignal::store::record_helpers::new_pre_key_record(
                 new_prekey_id,
                 &new_prekey_keypair,
             );
@@ -1015,9 +1015,9 @@ impl Client {
     pub(crate) async fn send_enc_rekey_retry_receipt(
         &self,
         stanza_id: &str,
-        peer_jid: &wacore_binary::Jid,
+        peer_jid: &wa_rs_binary::Jid,
         call_id: &str,
-        call_creator: &wacore_binary::Jid,
+        call_creator: &wa_rs_binary::Jid,
         retry_count: u8,
     ) -> Result<(), anyhow::Error> {
         let device_snapshot = self.persistence_manager.get_device_snapshot().await;
@@ -1059,9 +1059,9 @@ mod tests {
     use crate::test_utils::MockHttpClient;
     use std::borrow::Cow;
     use std::sync::Arc;
-    use wacore::types::jid::JidExt as _;
-    use wacore_binary::{Jid, JidExt};
-    use waproto::whatsapp as wa;
+    use wa_rs_core::types::jid::JidExt as _;
+    use wa_rs_binary::{Jid, JidExt};
+    use wa_rs_proto::whatsapp as wa;
 
     #[tokio::test]
     async fn recent_message_cache_insert_and_take() {
@@ -1112,7 +1112,7 @@ mod tests {
 
     #[test]
     fn get_bytes_content_extracts_bytes() {
-        use wacore_binary::{Attrs, Node};
+        use wa_rs_binary::{Attrs, Node};
 
         // Test with bytes content
         let node = Node {
@@ -1154,8 +1154,8 @@ mod tests {
     /// Matches WhatsApp Web's sendRetryReceipt: if (to.isUser()) { if (isMeAccount(to)) { ... } }
     #[test]
     fn retry_receipt_attributes_for_device_sync_vs_peer_vs_group() {
-        use wacore::types::message::{MessageCategory, MessageInfo, MessageSource};
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_core::types::message::{MessageCategory, MessageInfo, MessageSource};
+        use wa_rs_binary::builder::NodeBuilder;
 
         let our_pn = Jid::pn("559999999999");
         let our_lid = Jid::lid("100000000000001");
@@ -1164,7 +1164,7 @@ mod tests {
             info: &MessageInfo,
             our_pn: &Jid,
             our_lid: &Jid,
-        ) -> wacore_binary::Node {
+        ) -> wa_rs_binary::Node {
             // Mirror production routing: groups → chat JID, DMs → sender JID
             let receipt_to = if info.source.is_group {
                 &info.source.chat
@@ -1319,7 +1319,7 @@ mod tests {
     /// </receipt>
     #[test]
     fn enc_rekey_retry_receipt_node_structure() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let peer_jid: Jid = "5511999999999@s.whatsapp.net".parse().expect("peer JID");
         let call_creator: Jid = "5511888888888@s.whatsapp.net".parse().expect("creator JID");
@@ -1393,7 +1393,7 @@ mod tests {
             .get_optional_child("registration")
             .expect("<registration> child must exist");
         let reg_bytes = match &registration.content {
-            Some(wacore_binary::NodeContent::Bytes(b)) => b.clone(),
+            Some(wa_rs_binary::NodeContent::Bytes(b)) => b.clone(),
             _ => panic!("registration must contain bytes"),
         };
         assert_eq!(
@@ -1574,7 +1574,7 @@ mod tests {
     /// without `<keys>`. Used by tests that exercise the no-bundle path of
     /// `update_local_signal_session`.
     fn build_retry_receipt_without_keys() -> Node {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
         NodeBuilder::new("receipt").build()
     }
 
@@ -1582,7 +1582,7 @@ mod tests {
     /// endian). Used to exercise the reg-ID-mismatch branch without a full
     /// `<keys>` bundle.
     fn build_retry_receipt_with_registration(reg_id: u32) -> Node {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
         NodeBuilder::new("receipt")
             .children([NodeBuilder::new("registration")
                 .bytes(reg_id.to_be_bytes().to_vec())
@@ -1602,8 +1602,8 @@ mod tests {
     // Produces a parseable SessionRecord so peek_session succeeds and
     // alice_base_key/remote_registration_id return meaningful values.
     fn valid_serialized_session(remote_regid: u32, base_key: Vec<u8>) -> Vec<u8> {
-        use wacore::libsignal::protocol::{SessionRecord, SessionState};
-        use waproto::whatsapp::SessionStructure;
+        use wa_rs_core::libsignal::protocol::{SessionRecord, SessionState};
+        use wa_rs_proto::whatsapp::SessionStructure;
 
         let state = SessionState::from_session_structure(SessionStructure {
             session_version: Some(3),
@@ -1876,7 +1876,7 @@ mod tests {
     #[test]
     fn bot_jid_detection() {
         // Test bot JID detection for bot message filtering
-        use wacore_binary::JidExt as _;
+        use wa_rs_binary::JidExt as _;
 
         // Regular user JID - not a bot
         let regular_user: Jid = "1234567890@s.whatsapp.net".parse().unwrap();
@@ -1901,7 +1901,7 @@ mod tests {
 
     #[test]
     fn extract_registration_id_from_node_test() {
-        use wacore_binary::{Attrs, Node};
+        use wa_rs_binary::{Attrs, Node};
 
         // Test with 4-byte registration ID
         let reg_bytes = vec![0x00, 0x01, 0x02, 0x03]; // = 66051
@@ -1959,7 +1959,7 @@ mod tests {
     #[test]
     fn group_or_status_detection_for_sender_key_handling() {
         // Test that both groups and status broadcasts trigger sender key handling
-        use wacore_binary::JidExt as _;
+        use wa_rs_binary::JidExt as _;
 
         let group: Jid = "120363021033254949@g.us".parse().unwrap();
         let status: Jid = "status@broadcast".parse().unwrap();
@@ -2052,7 +2052,7 @@ mod tests {
         for (retry_count, reason, should_include_keys, description) in test_cases {
             // Replicate the logic from send_retry_receipt
             let would_include_keys =
-                wacore::protocol::retry::should_include_keys(retry_count, reason);
+                wa_rs_core::protocol::retry::should_include_keys(retry_count, reason);
 
             assert_eq!(
                 would_include_keys, should_include_keys,
@@ -2104,7 +2104,7 @@ mod tests {
                 };
 
                 let would_include_keys =
-                    wacore::protocol::retry::should_include_keys(retry_count, reason);
+                    wa_rs_core::protocol::retry::should_include_keys(retry_count, reason);
 
                 if would_include_keys {
                     keys_included.fetch_add(1, Ordering::SeqCst);
@@ -2160,7 +2160,7 @@ mod tests {
         let reason = RetryReason::NoSession;
 
         // With optimization, we include keys on retry#1
-        let would_include_keys = wacore::protocol::retry::should_include_keys(retry_count, reason);
+        let would_include_keys = wa_rs_core::protocol::retry::should_include_keys(retry_count, reason);
 
         assert!(
             would_include_keys,
@@ -2183,14 +2183,14 @@ mod tests {
                 ..Default::default()
             },
             message_ids: vec!["MSG001".to_string()],
-            timestamp: wacore::time::now_utc(),
+            timestamp: wa_rs_core::time::now_utc(),
             r#type: crate::types::presence::ReceiptType::Retry,
         }
     }
 
     #[test]
     fn resolve_retry_chat_info_dm_with_device() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // Node attrs are unused in the DM branch (no participant lookup)
         let node = NodeBuilder::new("receipt").build();
@@ -2209,7 +2209,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_lid_dm_with_device() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let node = NodeBuilder::new("receipt").build();
         let receipt = make_test_receipt("236395184570386:5@lid");
@@ -2228,7 +2228,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_dm_bare() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let node = NodeBuilder::new("receipt").build();
         let receipt = make_test_receipt("5511999999999@s.whatsapp.net");
@@ -2241,7 +2241,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_group() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let node = NodeBuilder::new("receipt")
             .attr("from", "120363021033254949@g.us")
@@ -2256,7 +2256,7 @@ mod tests {
                 ..Default::default()
             },
             message_ids: vec!["MSG001".to_string()],
-            timestamp: wacore::time::now_utc(),
+            timestamp: wa_rs_core::time::now_utc(),
             r#type: crate::types::presence::ReceiptType::Retry,
         };
         let info = resolve_retry_chat_info(&receipt, &node.as_node_ref(), None, None);
@@ -2269,7 +2269,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_status_broadcast() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let node = NodeBuilder::new("receipt")
             .attr("from", "status@broadcast")
@@ -2288,7 +2288,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_status_broadcast_no_participant() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // Missing participant attr (edge case) — falls back to sender
         let node = NodeBuilder::new("receipt")
@@ -2496,11 +2496,11 @@ mod tests {
         // Now add a LID mapping (simulates mapping arriving between send and retry)
         client
             .lid_pn_cache
-            .add(&wacore::types::lid_pn::LidPnEntry {
+            .add(&wa_rs_core::types::lid_pn::LidPnEntry {
                 lid: lid_jid.user.to_string(),
                 phone_number: pn_jid.user.to_string(),
                 created_at: 0,
-                learning_source: wacore::types::lid_pn::LearningSource::Usync,
+                learning_source: wa_rs_core::types::lid_pn::LearningSource::Usync,
             })
             .await;
 
@@ -2545,11 +2545,11 @@ mod tests {
 
         client
             .lid_pn_cache
-            .add(&wacore::types::lid_pn::LidPnEntry {
+            .add(&wa_rs_core::types::lid_pn::LidPnEntry {
                 lid: lid_jid.user.to_string(),
                 phone_number: pn_jid.user.to_string(),
                 created_at: 0,
-                learning_source: wacore::types::lid_pn::LearningSource::Usync,
+                learning_source: wa_rs_core::types::lid_pn::LearningSource::Usync,
             })
             .await;
 
@@ -2613,11 +2613,11 @@ mod tests {
         // Add LID mapping
         client
             .lid_pn_cache
-            .add(&wacore::types::lid_pn::LidPnEntry {
+            .add(&wa_rs_core::types::lid_pn::LidPnEntry {
                 lid: lid_jid.user.to_string(),
                 phone_number: pn_jid.user.to_string(),
                 created_at: 0,
-                learning_source: wacore::types::lid_pn::LearningSource::Usync,
+                learning_source: wa_rs_core::types::lid_pn::LearningSource::Usync,
             })
             .await;
 
@@ -2711,11 +2711,11 @@ mod tests {
         // Add mapping but don't store any message
         client
             .lid_pn_cache
-            .add(&wacore::types::lid_pn::LidPnEntry {
+            .add(&wa_rs_core::types::lid_pn::LidPnEntry {
                 lid: lid_jid.user.to_string(),
                 phone_number: pn_jid.user.to_string(),
                 created_at: 0,
-                learning_source: wacore::types::lid_pn::LearningSource::Usync,
+                learning_source: wa_rs_core::types::lid_pn::LearningSource::Usync,
             })
             .await;
 
@@ -2728,7 +2728,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_peer_device_with_recipient() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // Peer retry: from=our own JID, recipient=the actual chat partner
         let our_pn: Jid = "5511999999999@s.whatsapp.net".parse().unwrap();
@@ -2751,7 +2751,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_peer_device_without_recipient() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // Peer retry without recipient attr — should fall back to from
         let our_pn: Jid = "5511999999999@s.whatsapp.net".parse().unwrap();
@@ -2767,7 +2767,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_bot_with_recipient() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // Bot retry: from=bot JID, recipient=actual chat
         let node = NodeBuilder::new("receipt")
@@ -2785,7 +2785,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_bot_without_recipient() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // Bot retry without recipient — falls through to normal DM path
         let node = NodeBuilder::new("receipt").build();
@@ -2800,7 +2800,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_preserves_original_from() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // DM with device suffix — original_from preserves the raw receipt from
         // (WA Web: variable m = e.from, used as-is for stanza to)
@@ -2820,7 +2820,7 @@ mod tests {
 
     #[test]
     fn resolve_retry_chat_info_peer_via_lid() {
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         // Peer retry detected via LID (not PN)
         let our_lid: Jid = "236395184570386@lid".parse().unwrap();

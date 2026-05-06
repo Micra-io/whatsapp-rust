@@ -1,7 +1,7 @@
 //! Identity presented in the noise-handshake `ClientPayload.UserAgent`.
 //! Independent of `DeviceProps`. Default is [`ClientProfile::web`].
 
-use waproto::whatsapp as wa;
+use wa_rs_proto::whatsapp as wa;
 
 #[derive(Debug, Clone)]
 pub struct ClientProfile {

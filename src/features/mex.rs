@@ -1,16 +1,16 @@
 //! MEX (Meta Exchange) GraphQL feature.
 //!
-//! Protocol types are defined in `wacore::iq::mex`.
+//! Protocol types are defined in `wa_rs_core::iq::mex`.
 
 use crate::client::Client;
 use crate::request::IqError;
 use serde_json::Value;
 use thiserror::Error;
-use wacore::iq::mex::MexQuerySpec;
-use wacore_binary::jid::JidError;
+use wa_rs_core::iq::mex::MexQuerySpec;
+use wa_rs_binary::jid::JidError;
 
-// Re-export types from wacore
-pub use wacore::iq::mex::{MexDoc, MexErrorExtensions, MexGraphQLError, MexResponse};
+// Re-export types from wa_rs_core
+pub use wa_rs_core::iq::mex::{MexDoc, MexErrorExtensions, MexGraphQLError, MexResponse};
 
 /// Error types for MEX operations.
 #[derive(Debug, Error)]
@@ -37,7 +37,7 @@ pub enum MexError {
 #[derive(Debug, Clone)]
 pub struct MexRequest {
     /// GraphQL persisted-query descriptor (name + id), from
-    /// [`wacore::iq::mex_ids`].
+    /// [`wa_rs_core::iq::mex_ids`].
     pub doc: MexDoc,
     /// Query variables.
     pub variables: Value,
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn invalid_jid_preserves_jid_error_source() {
-        let raw: Result<wacore_binary::Jid, JidError> = "not-a-valid-jid".parse();
+        let raw: Result<wa_rs_binary::Jid, JidError> = "not-a-valid-jid".parse();
         let jid_err = raw.unwrap_err();
         let me: MexError = jid_err.into();
         let src = std::error::Error::source(&me).expect("source preserved");

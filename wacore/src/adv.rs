@@ -24,9 +24,9 @@ pub struct DecodedKeyIndex {
 /// (the notification arrives over a Noise-encrypted connection, so content is
 /// already authenticated).
 pub fn decode_key_index_list(signed_bytes: &[u8]) -> Option<DecodedKeyIndex> {
-    let signed = waproto::whatsapp::AdvSignedKeyIndexList::decode(signed_bytes).ok()?;
+    let signed = wa_rs_proto::whatsapp::AdvSignedKeyIndexList::decode(signed_bytes).ok()?;
     let details_bytes = signed.details.as_ref()?;
-    let key_index = waproto::whatsapp::AdvKeyIndexList::decode(details_bytes.as_slice()).ok()?;
+    let key_index = wa_rs_proto::whatsapp::AdvKeyIndexList::decode(details_bytes.as_slice()).ok()?;
 
     let raw_id = key_index.raw_id?;
     let timestamp = key_index.timestamp?;
@@ -201,7 +201,7 @@ mod tests {
     fn decode_roundtrip() {
         use prost::Message;
 
-        let key_index = waproto::whatsapp::AdvKeyIndexList {
+        let key_index = wa_rs_proto::whatsapp::AdvKeyIndexList {
             raw_id: Some(42),
             timestamp: Some(1000),
             current_index: Some(5),
@@ -210,7 +210,7 @@ mod tests {
         };
         let details = key_index.encode_to_vec();
 
-        let signed = waproto::whatsapp::AdvSignedKeyIndexList {
+        let signed = wa_rs_proto::whatsapp::AdvSignedKeyIndexList {
             details: Some(details),
             account_signature: None,
             account_signature_key: None,

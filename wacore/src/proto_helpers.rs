@@ -1,6 +1,6 @@
 use std::str::FromStr;
-use wacore_binary::{Jid, JidExt};
-use waproto::whatsapp as wa;
+use wa_rs_binary::{Jid, JidExt};
+use wa_rs_proto::whatsapp as wa;
 
 /// Single source of truth for the message types that carry a `context_info`
 /// field. Consumed by `for_each_context_info_message!`, `set_context_info`
@@ -88,7 +88,7 @@ pub trait MessageExt {
     /// # Example
     ///
     /// ```ignore
-    /// use wacore::proto_helpers::MessageExt;
+    /// use wa_rs_core::proto_helpers::MessageExt;
     ///
     /// let context_info = wa::ContextInfo {
     ///     stanza_id: Some(message_id.clone()),
@@ -106,7 +106,7 @@ pub trait MessageExt {
     /// # Example
     ///
     /// ```ignore
-    /// use wacore::proto_helpers::MessageExt;
+    /// use wa_rs_core::proto_helpers::MessageExt;
     ///
     /// let mut reply = wa::Message {
     ///     image_message: Some(Box::new(wa::message::ImageMessage {
@@ -496,7 +496,7 @@ pub fn merge_dsm_context(
 /// # Example
 ///
 /// ```ignore
-/// use wacore::proto_helpers::{build_quote_context, MessageExt};
+/// use wa_rs_core::proto_helpers::{build_quote_context, MessageExt};
 ///
 /// let context = build_quote_context(
 ///     "3EB0123456789",

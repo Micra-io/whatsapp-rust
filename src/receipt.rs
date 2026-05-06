@@ -3,15 +3,15 @@ use crate::types::events::{Event, Receipt};
 use crate::types::presence::ReceiptType;
 use log::debug;
 use std::sync::Arc;
-use wacore::types::message::MessageCategory;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, JidExt as _};
+use wa_rs_core::types::message::MessageCategory;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, JidExt as _};
 
-use wacore_binary::OwnedNodeRef;
+use wa_rs_binary::OwnedNodeRef;
 
 impl Client {
     fn should_send_delivery_receipt(info: &crate::types::message::MessageInfo) -> bool {
-        use wacore_binary::STATUS_BROADCAST_USER;
+        use wa_rs_binary::STATUS_BROADCAST_USER;
 
         if info.id.is_empty()
             || info.source.chat.user == STATUS_BROADCAST_USER
@@ -44,8 +44,8 @@ impl Client {
         let stanza_ts = attrs
             .optional_u64("t")
             .and_then(|t| i64::try_from(t).ok())
-            .and_then(wacore::time::from_secs)
-            .unwrap_or_else(wacore::time::now_utc);
+            .and_then(wa_rs_core::time::from_secs)
+            .unwrap_or_else(wa_rs_core::time::now_utc);
 
         let receipt_type = ReceiptType::parse(receipt_type_str);
         let is_view = receipt_type_str == "view";
@@ -63,7 +63,7 @@ impl Client {
         // before the retry pipeline below.
         if let Some(part_node) = nr.get_optional_child("participants") {
             let (agg_msg_id, agg_key, users) =
-                wacore::stanza::receipt::parse_participants(part_node);
+                wa_rs_core::stanza::receipt::parse_participants(part_node);
             let fan_out_id = agg_msg_id
                 .clone()
                 .or_else(|| agg_key.clone())
@@ -79,7 +79,7 @@ impl Client {
                 let user_ts = user
                     .timestamp
                     .and_then(|t| i64::try_from(t).ok())
-                    .and_then(wacore::time::from_secs)
+                    .and_then(wa_rs_core::time::from_secs)
                     .unwrap_or(stanza_ts);
                 // aggregated_by_message: each <user> carries its own type;
                 // aggregated_by_type: all users share the receipt-level type.
@@ -105,7 +105,7 @@ impl Client {
         // Simple receipt: collect `<list><item id=.../>` items plus the stanza
         // id (for non-view receipts), matching the JS p() branch.
         let message_ids =
-            wacore::stanza::receipt::collect_simple_message_ids(nr, &stanza_id, is_view);
+            wa_rs_core::stanza::receipt::collect_simple_message_ids(nr, &stanza_id, is_view);
 
         debug!(
             "Received receipt type '{receipt_type:?}' for {} message(s) from {from}",
@@ -228,7 +228,7 @@ impl Client {
             return Ok(());
         }
 
-        let timestamp = wacore::time::now_secs_u64().to_string();
+        let timestamp = wa_rs_core::time::now_secs_u64().to_string();
 
         let mut builder = NodeBuilder::new("receipt")
             .attr("to", chat)
@@ -242,7 +242,7 @@ impl Client {
 
         // Additional message IDs go into <list><item id="..."/></list>
         if message_ids.len() > 1 {
-            let items: Vec<wacore_binary::Node> = message_ids[1..]
+            let items: Vec<wa_rs_binary::Node> = message_ids[1..]
                 .iter()
                 .map(|id| NodeBuilder::new("item").attr("id", id).build())
                 .collect();
@@ -266,7 +266,7 @@ mod tests {
     use crate::test_utils::{MockHttpClient, TestEventCollector};
     use crate::types::message::{MessageInfo, MessageSource};
 
-    fn node_to_arc(node: wacore_binary::Node) -> Arc<OwnedNodeRef> {
+    fn node_to_arc(node: wa_rs_binary::Node) -> Arc<OwnedNodeRef> {
         crate::test_utils::node_to_owned_ref(&node)
     }
 
@@ -735,7 +735,7 @@ mod tests {
                 _ => None,
             })
             .expect("expected Receipt");
-        let expected = wacore::time::from_secs(1700000000).expect("valid ts");
+        let expected = wa_rs_core::time::from_secs(1700000000).expect("valid ts");
         assert_eq!(r.timestamp, expected);
     }
 
@@ -841,7 +841,7 @@ mod tests {
     /// ensuring the NodeValue::Jid optimization is not accidentally regressed to to_string.
     #[test]
     fn test_receipt_node_uses_jid_attrs() {
-        use wacore_binary::NodeValue;
+        use wa_rs_binary::NodeValue;
 
         let chat_jid: Jid = "120363021033254949@g.us"
             .parse()

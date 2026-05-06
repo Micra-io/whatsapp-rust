@@ -2,8 +2,8 @@
 //! children so future server additions don't break the handler.
 
 use anyhow::{Result, anyhow};
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Node, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Node, NodeRef};
 
 use crate::time::from_secs;
 use crate::types::call::{CallAction, CallAudioCodec, IncomingCall};
@@ -205,8 +205,8 @@ pub fn build_offer_ack_receipt(call: &IncomingCall, own_ad: Option<&Jid>) -> Opt
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
-    use wacore_binary::{Jid, Server};
+    use wa_rs_binary::builder::NodeBuilder;
+    use wa_rs_binary::{Jid, Server};
 
     fn fake_caller_lid() -> Jid {
         Jid::new("111111111111111", Server::Lid)
@@ -233,7 +233,7 @@ mod tests {
             .attr("call-id", "CALL-ID-0001")
     }
 
-    fn as_ref<'a>(n: &'a wacore_binary::Node) -> NodeRef<'a> {
+    fn as_ref<'a>(n: &'a wa_rs_binary::Node) -> NodeRef<'a> {
         n.as_node_ref()
     }
 

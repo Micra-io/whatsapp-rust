@@ -4,8 +4,8 @@
 //! Orchestration and dispatch remain in `whatsapp-rust/src/receipt.rs`.
 
 use crate::types::message::{MessageCategory, MessageInfo};
-use wacore_binary::NodeRef;
-use wacore_binary::{Jid, JidExt as _, STATUS_BROADCAST_USER};
+use wa_rs_binary::NodeRef;
+use wa_rs_binary::{Jid, JidExt as _, STATUS_BROADCAST_USER};
 
 /// Parsed `<user>` entry inside `<receipt><participants>`.
 ///
@@ -219,7 +219,7 @@ mod tests {
 
     // -- Aggregated and list receipt parsing -------------------------------
 
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     /// `<receipt><participants message_id="...">` shape with per-user types.
     /// Mirrors `WAWebHandleMsgReceiptParser` m() branch.

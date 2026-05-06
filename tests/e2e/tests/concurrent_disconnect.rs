@@ -16,10 +16,10 @@
 
 use std::sync::Arc;
 use std::time::Duration;
-use wacore::time::Instant;
+use wa_rs_core::time::Instant;
 
 use e2e_tests::{TestClient, text_msg};
-use wacore::types::events::Event;
+use wa_rs_core::types::events::Event;
 
 /// Baseline: 2 clients, multi-thread runtime. Should complete nearly
 /// instantly (the race window is microseconds in practice), so a generous

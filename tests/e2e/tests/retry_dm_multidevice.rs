@@ -2,10 +2,10 @@
 
 use e2e_tests::{TestClient, send_and_expect_text, text_msg};
 use log::info;
-use wacore::types::events::Event;
-use wacore_binary::JidExt as _;
-use wacore_binary::node::Node;
-use whatsapp_rust::{NodeFilter, SendOptions};
+use wa_rs_core::types::events::Event;
+use wa_rs_binary::JidExt as _;
+use wa_rs_binary::node::Node;
+use wa_rs::{NodeFilter, SendOptions};
 
 fn participant_target_count(message_node: &Node) -> usize {
     message_node

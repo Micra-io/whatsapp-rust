@@ -15,9 +15,9 @@ use crate::iq::node::{required_attr, required_child};
 use crate::protocol::ProtocolNode;
 use anyhow::{Result, anyhow};
 use serde::Serialize;
-use wacore_binary::Jid;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Node, NodeRef};
+use wa_rs_binary::Jid;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Node, NodeRef};
 
 /// Device notification operation type.
 ///
@@ -69,7 +69,7 @@ impl ProtocolNode for KeyIndexInfo {
     }
 
     fn try_from_node_ref(node: &NodeRef<'_>) -> Result<Self> {
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
         if node.tag != "key-index-list" {
             return Err(anyhow!("expected <key-index-list>, got <{}>", node.tag));
         }
@@ -373,7 +373,7 @@ impl DeviceNotification {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn test_device_notification_type_as_str() {

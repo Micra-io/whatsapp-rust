@@ -4,9 +4,9 @@ use std::time::Duration;
 
 use crate::iq::spec::IqSpec;
 use crate::request::InfoQuery;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{NodeContent, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{NodeContent, NodeRef};
 
 /// WA Web uses a 3s timeout for the logout IQ (Socket/Model.js).
 const LOGOUT_TIMEOUT: Duration = Duration::from_secs(3);

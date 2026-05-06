@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use wacore_binary::Jid;
+use wa_rs_binary::Jid;
 
 #[derive(Debug, Clone)]
 pub struct BasicCallMeta {

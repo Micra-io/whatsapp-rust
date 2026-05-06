@@ -6,7 +6,7 @@ use crate::cache::Cache;
 use serde::{Serialize, de::DeserializeOwned};
 
 use crate::cache_store::TypedCache;
-pub use wacore::store::cache::CacheStore;
+pub use wa_rs_core::store::cache::CacheStore;
 
 /// Configuration for a single cache instance.
 ///
@@ -130,7 +130,7 @@ impl CacheStores {
 /// # Example — tune TTL/capacity
 ///
 /// ```rust,ignore
-/// use whatsapp_rust::{CacheConfig, CacheEntryConfig};
+/// use wa_rs::{CacheConfig, CacheEntryConfig};
 /// use std::time::Duration;
 ///
 /// let config = CacheConfig {
@@ -143,7 +143,7 @@ impl CacheStores {
 ///
 /// ```rust,ignore
 /// use std::sync::Arc;
-/// use whatsapp_rust::{CacheConfig, CacheStores};
+/// use wa_rs::{CacheConfig, CacheStores};
 ///
 /// let redis = Arc::new(MyRedisCacheStore::new("redis://localhost:6379"));
 /// let config = CacheConfig {

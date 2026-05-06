@@ -2,9 +2,9 @@ use crate::error::NoiseError;
 use crate::state::{NoiseCipher, NoiseState};
 use prost::Message;
 use thiserror::Error;
-use wacore_libsignal::protocol::{KeyPair, PrivateKey, PublicKey};
-use waproto::whatsapp::cert_chain::noise_certificate;
-use waproto::whatsapp::{self as wa, CertChain, HandshakeMessage};
+use wa_rs_libsignal::protocol::{KeyPair, PrivateKey, PublicKey};
+use wa_rs_proto::whatsapp::cert_chain::noise_certificate;
+use wa_rs_proto::whatsapp::{self as wa, CertChain, HandshakeMessage};
 
 const WA_CERT_ISSUER_SERIAL: i64 = 0;
 
@@ -31,7 +31,7 @@ fn verify_cert_step(
     }
     let signature = signature
         .ok_or_else(|| HandshakeError::CertVerification(format!("Missing {label} signature")))?;
-    let pk = wacore_libsignal::core::curve::PublicKey::from_djb_public_key_bytes(issuer_key)
+    let pk = wa_rs_libsignal::core::curve::PublicKey::from_djb_public_key_bytes(issuer_key)
         .map_err(|_| {
             HandshakeError::CertVerification(format!(
                 "Invalid {label} issuer key (not Djb/Curve25519)"
@@ -75,9 +75,9 @@ pub type Result<T> = std::result::Result<T, HandshakeError>;
 /// Parsed leaf+intermediate certificate identities pulled from a verified
 /// `CertChain`.
 ///
-/// The wider crate (`wacore::store::device::CachedServerCertChain`) wraps
+/// The wider crate (`wa_rs_core::store::device::CachedServerCertChain`) wraps
 /// these fields with serde so they can persist for Noise IK reuse on later
-/// connects. Keeping the no-std-friendly version here lets `wacore-noise`
+/// connects. Keeping the no-std-friendly version here lets `wa_rs_core-noise`
 /// stay free of a serde dependency.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VerifiedServerCertChain {
@@ -406,7 +406,7 @@ impl XxHandshakeState {
     /// * `prologue` - The prologue/header bytes (e.g., WA_CONN_HEADER)
     pub fn new(static_kp: KeyPair, client_payload: Vec<u8>, prologue: &[u8]) -> Result<Self> {
         let ephemeral_kp = KeyPair::generate(&mut rand::rng());
-        let mut noise = NoiseHandshake::new(wacore_binary::consts::NOISE_PATTERN_XX, prologue)?;
+        let mut noise = NoiseHandshake::new(wa_rs_binary::consts::NOISE_PATTERN_XX, prologue)?;
         noise.authenticate(ephemeral_kp.public_key.public_key_bytes());
 
         Ok(Self {
@@ -540,7 +540,7 @@ impl IkHandshakeState {
         prologue: &[u8],
     ) -> Result<Self> {
         let ephemeral_kp = KeyPair::generate(&mut rand::rng());
-        let noise = NoiseHandshake::new(wacore_binary::consts::NOISE_PATTERN_IK, prologue)?;
+        let noise = NoiseHandshake::new(wa_rs_binary::consts::NOISE_PATTERN_IK, prologue)?;
 
         Ok(Self {
             noise,
@@ -657,7 +657,7 @@ pub struct XxFallbackHandshakeState {
 impl XxFallbackHandshakeState {
     pub fn from_ik_failure(inputs: IkFallbackInputs, prologue: &[u8]) -> Result<Self> {
         let mut noise =
-            NoiseHandshake::new(wacore_binary::consts::NOISE_PATTERN_XXFALLBACK, prologue)?;
+            NoiseHandshake::new(wa_rs_binary::consts::NOISE_PATTERN_XXFALLBACK, prologue)?;
         // Reuse the ephemeral that was already sent in the IK ClientHello —
         // its public bytes go into the XXfallback transcript here.
         noise.authenticate(inputs.ephemeral_kp.public_key.public_key_bytes());
@@ -709,8 +709,8 @@ impl XxFallbackHandshakeState {
 mod tests {
     use super::*;
     use prost::Message;
-    use wacore_binary::consts::WA_CONN_HEADER;
-    use waproto::whatsapp as wa;
+    use wa_rs_binary::consts::WA_CONN_HEADER;
+    use wa_rs_proto::whatsapp as wa;
 
     /// A self-contained Noise responder used to exercise the initiator-side
     /// state machines end-to-end. Mirrors what the production WhatsApp server
@@ -833,7 +833,7 @@ mod tests {
         let encrypted_payload = ch.payload.unwrap();
 
         let mut noise =
-            NoiseHandshake::new(wacore_binary::consts::NOISE_PATTERN_IK, prologue).unwrap();
+            NoiseHandshake::new(wa_rs_binary::consts::NOISE_PATTERN_IK, prologue).unwrap();
         // pre-message: <- s (responder's own static)
         let server_static_pub = responder.server_static_pub();
         noise.authenticate(&server_static_pub);
@@ -905,7 +905,7 @@ mod tests {
         // Stand up a fresh XXfallback responder and authenticate the
         // already-sent client ephemeral.
         let mut noise =
-            NoiseHandshake::new(wacore_binary::consts::NOISE_PATTERN_XXFALLBACK, prologue).unwrap();
+            NoiseHandshake::new(wa_rs_binary::consts::NOISE_PATTERN_XXFALLBACK, prologue).unwrap();
         noise.authenticate(&client_eph_pub);
 
         let server_eph = KeyPair::generate(&mut rand::rng());
@@ -956,7 +956,7 @@ mod tests {
         let (server_hello, server_noise, server_eph, _client_eph_pub) = xx_serve_ext(
             &responder,
             &client_hello,
-            wacore_binary::consts::NOISE_PATTERN_XX,
+            wa_rs_binary::consts::NOISE_PATTERN_XX,
             &prologue,
         );
 

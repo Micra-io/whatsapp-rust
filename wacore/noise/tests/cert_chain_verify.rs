@@ -2,18 +2,18 @@
 //! path. Lives here (not under `#[cfg(test)] mod tests` inside the lib)
 //! because the in-crate cfg(test) gate inside `verify_cert_step` short-circuits
 //! the XEdDSA verification so other unit tests can use the zero-signed
-//! `build_cert_chain_bytes` fixture. Integration tests load `wacore-noise` as
+//! `build_cert_chain_bytes` fixture. Integration tests load `wa-rs-noise` as
 //! a regular dep without `cfg(test)`, so the real verify actually runs here.
 
 #![cfg(not(feature = "danger-skip-cert-chain-verify"))]
 
 use prost::Message;
-use waproto::whatsapp::{self as wa, cert_chain::noise_certificate};
+use wa_rs_proto::whatsapp::{self as wa, cert_chain::noise_certificate};
 
-use wacore_noise::HandshakeUtils;
+use wa_rs_noise::HandshakeUtils;
 
 /// Build a structurally valid `CertChain` blob with zero-filled signatures.
-/// Copy of the fixture in `wacore_noise::test_util` so this integration test
+/// Copy of the fixture in `wa_rs_noise::test_util` so this integration test
 /// doesn't need to enable the `test-util` feature (Cargo can't enable a lib
 /// feature from the lib's own dev-deps).
 fn build_zero_signed_chain(server_static_pub: &[u8; 32]) -> Vec<u8> {

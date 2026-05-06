@@ -1,11 +1,11 @@
 use crate::client::Client;
 use log::{debug, warn};
 use thiserror::Error;
-use wacore::WireEnum;
-use wacore::iq::tctoken::build_tc_token_node;
-use wacore_binary::Jid;
-use wacore_binary::Node;
-use wacore_binary::builder::NodeBuilder;
+use wa_rs_core::WireEnum;
+use wa_rs_core::iq::tctoken::build_tc_token_node;
+use wa_rs_binary::Jid;
+use wa_rs_binary::Node;
+use wa_rs_binary::builder::NodeBuilder;
 
 #[derive(Debug, Error)]
 pub enum PresenceError {
@@ -250,8 +250,8 @@ mod tests {
     use anyhow::Result;
     use std::str::FromStr;
     use std::sync::Arc;
-    use wacore::store::traits::Backend;
-    use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
+    use wa_rs_core::store::traits::Backend;
+    use wa_rs_tokio_transport::TokioWebSocketTransportFactory;
 
     // Mock HTTP client for testing
     #[derive(Debug, Clone)]

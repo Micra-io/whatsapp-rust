@@ -2,9 +2,9 @@
 
 use crate::client::Client;
 use log::debug;
-use wacore::WireEnum;
-use wacore_binary::Jid;
-use wacore_binary::builder::NodeBuilder;
+use wa_rs_core::WireEnum;
+use wa_rs_binary::Jid;
+use wa_rs_binary::builder::NodeBuilder;
 
 /// Chat state type for typing indicators.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, WireEnum)]
@@ -52,7 +52,7 @@ impl<'a> Chatstate<'a> {
         self.send(to, ChatStateType::Paused).await
     }
 
-    fn build_chatstate_node(&self, to: &Jid, state: ChatStateType) -> wacore_binary::Node {
+    fn build_chatstate_node(&self, to: &Jid, state: ChatStateType) -> wa_rs_binary::Node {
         let child = match state {
             ChatStateType::Composing => NodeBuilder::new("composing").build(),
             ChatStateType::Recording => {

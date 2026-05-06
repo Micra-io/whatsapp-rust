@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use wacore_binary::{Jid, JidExt, MessageId, MessageServerId};
-use waproto::whatsapp as wa;
+use wa_rs_binary::{Jid, JidExt, MessageId, MessageServerId};
+use wa_rs_proto::whatsapp as wa;
 
 use crate::WireEnum;
 
@@ -106,9 +106,9 @@ impl EditAttribute {
     /// `protocolMessage.key.fromMe` as a proxy for the `subtype` argument WA
     /// Web threads through from the MessageRecord. The convention is that an
     /// admin revoking someone else's message sets `fromMe=false`.
-    pub fn infer_from_message(msg: &waproto::whatsapp::Message) -> Option<Self> {
-        use waproto::whatsapp::message::protocol_message::Type as ProtocolType;
-        use waproto::whatsapp::message::secret_encrypted_message::SecretEncType;
+    pub fn infer_from_message(msg: &wa_rs_proto::whatsapp::Message) -> Option<Self> {
+        use wa_rs_proto::whatsapp::message::protocol_message::Type as ProtocolType;
+        use wa_rs_proto::whatsapp::message::secret_encrypted_message::SecretEncType;
 
         let msg = crate::send::unwrap_message(msg);
 
@@ -147,7 +147,7 @@ impl EditAttribute {
         // KeepInChat UNDO_KEEP_FOR_ALL is a sender-revoke at the wire level.
         if let Some(keep) = msg.keep_in_chat_message.as_ref()
             && keep.key.as_ref().and_then(|k| k.from_me) == Some(true)
-            && keep.keep_type == Some(waproto::whatsapp::KeepType::UndoKeepForAll as i32)
+            && keep.keep_type == Some(wa_rs_proto::whatsapp::KeepType::UndoKeepForAll as i32)
         {
             return Some(Self::SenderRevoke);
         }
@@ -284,7 +284,7 @@ mod tests {
 
     #[test]
     fn test_decrypt_fail_hide_logic_for_edits() {
-        // Documents the logic used in prepare_group_stanza (wacore/src/send.rs).
+        // Documents the logic used in prepare_group_stanza (wa_rs_core/src/send.rs).
         // The decrypt-fail="hide" attribute is added for edited messages to hide
         // failed decryption attempts. However, admin revokes should NOT have it
         // because WhatsApp Web doesn't include it, and the server rejects it.
@@ -306,13 +306,13 @@ mod tests {
 
     #[test]
     fn infer_from_message_admin_revoke() {
-        let msg = waproto::whatsapp::Message {
-            protocol_message: Some(Box::new(waproto::whatsapp::message::ProtocolMessage {
-                key: Some(waproto::whatsapp::MessageKey {
+        let msg = wa_rs_proto::whatsapp::Message {
+            protocol_message: Some(Box::new(wa_rs_proto::whatsapp::message::ProtocolMessage {
+                key: Some(wa_rs_proto::whatsapp::MessageKey {
                     from_me: Some(false),
                     ..Default::default()
                 }),
-                r#type: Some(waproto::whatsapp::message::protocol_message::Type::Revoke as i32),
+                r#type: Some(wa_rs_proto::whatsapp::message::protocol_message::Type::Revoke as i32),
                 ..Default::default()
             })),
             ..Default::default()
@@ -325,13 +325,13 @@ mod tests {
 
     #[test]
     fn infer_from_message_sender_revoke() {
-        let msg = waproto::whatsapp::Message {
-            protocol_message: Some(Box::new(waproto::whatsapp::message::ProtocolMessage {
-                key: Some(waproto::whatsapp::MessageKey {
+        let msg = wa_rs_proto::whatsapp::Message {
+            protocol_message: Some(Box::new(wa_rs_proto::whatsapp::message::ProtocolMessage {
+                key: Some(wa_rs_proto::whatsapp::MessageKey {
                     from_me: Some(true),
                     ..Default::default()
                 }),
-                r#type: Some(waproto::whatsapp::message::protocol_message::Type::Revoke as i32),
+                r#type: Some(wa_rs_proto::whatsapp::message::protocol_message::Type::Revoke as i32),
                 ..Default::default()
             })),
             ..Default::default()
@@ -344,9 +344,9 @@ mod tests {
 
     #[test]
     fn infer_from_message_top_level_edit() {
-        let msg = waproto::whatsapp::Message {
-            edited_message: Some(Box::new(waproto::whatsapp::message::FutureProofMessage {
-                message: Some(Box::new(waproto::whatsapp::Message::default())),
+        let msg = wa_rs_proto::whatsapp::Message {
+            edited_message: Some(Box::new(wa_rs_proto::whatsapp::message::FutureProofMessage {
+                message: Some(Box::new(wa_rs_proto::whatsapp::Message::default())),
             })),
             ..Default::default()
         };
@@ -358,9 +358,9 @@ mod tests {
 
     #[test]
     fn infer_from_message_legacy_edit() {
-        let msg = waproto::whatsapp::Message {
-            protocol_message: Some(Box::new(waproto::whatsapp::message::ProtocolMessage {
-                edited_message: Some(Box::new(waproto::whatsapp::Message::default())),
+        let msg = wa_rs_proto::whatsapp::Message {
+            protocol_message: Some(Box::new(wa_rs_proto::whatsapp::message::ProtocolMessage {
+                edited_message: Some(Box::new(wa_rs_proto::whatsapp::Message::default())),
                 ..Default::default()
             })),
             ..Default::default()
@@ -373,16 +373,16 @@ mod tests {
 
     #[test]
     fn infer_from_message_message_edit_sender() {
-        let msg = waproto::whatsapp::Message {
-            protocol_message: Some(Box::new(waproto::whatsapp::message::ProtocolMessage {
-                key: Some(waproto::whatsapp::MessageKey {
+        let msg = wa_rs_proto::whatsapp::Message {
+            protocol_message: Some(Box::new(wa_rs_proto::whatsapp::message::ProtocolMessage {
+                key: Some(wa_rs_proto::whatsapp::MessageKey {
                     from_me: Some(true),
                     ..Default::default()
                 }),
                 r#type: Some(
-                    waproto::whatsapp::message::protocol_message::Type::MessageEdit as i32,
+                    wa_rs_proto::whatsapp::message::protocol_message::Type::MessageEdit as i32,
                 ),
-                edited_message: Some(Box::new(waproto::whatsapp::Message::default())),
+                edited_message: Some(Box::new(wa_rs_proto::whatsapp::Message::default())),
                 ..Default::default()
             })),
             ..Default::default()
@@ -395,7 +395,7 @@ mod tests {
 
     #[test]
     fn infer_from_message_plain_returns_none() {
-        let msg = waproto::whatsapp::Message {
+        let msg = wa_rs_proto::whatsapp::Message {
             conversation: Some("plain".into()),
             ..Default::default()
         };
@@ -404,19 +404,19 @@ mod tests {
 
     #[test]
     fn infer_from_message_unwraps_neutral_wrappers() {
-        let inner_revoke = waproto::whatsapp::Message {
-            protocol_message: Some(Box::new(waproto::whatsapp::message::ProtocolMessage {
-                key: Some(waproto::whatsapp::MessageKey {
+        let inner_revoke = wa_rs_proto::whatsapp::Message {
+            protocol_message: Some(Box::new(wa_rs_proto::whatsapp::message::ProtocolMessage {
+                key: Some(wa_rs_proto::whatsapp::MessageKey {
                     from_me: Some(false),
                     ..Default::default()
                 }),
-                r#type: Some(waproto::whatsapp::message::protocol_message::Type::Revoke as i32),
+                r#type: Some(wa_rs_proto::whatsapp::message::protocol_message::Type::Revoke as i32),
                 ..Default::default()
             })),
             ..Default::default()
         };
-        let wrapped = waproto::whatsapp::Message {
-            ephemeral_message: Some(Box::new(waproto::whatsapp::message::FutureProofMessage {
+        let wrapped = wa_rs_proto::whatsapp::Message {
+            ephemeral_message: Some(Box::new(wa_rs_proto::whatsapp::message::FutureProofMessage {
                 message: Some(Box::new(inner_revoke)),
             })),
             ..Default::default()
@@ -427,16 +427,16 @@ mod tests {
         );
 
         // Same for pin wrapped in view_once and device_sent (double nesting).
-        let inner_pin = waproto::whatsapp::Message {
-            pin_in_chat_message: Some(waproto::whatsapp::message::PinInChatMessage::default()),
+        let inner_pin = wa_rs_proto::whatsapp::Message {
+            pin_in_chat_message: Some(wa_rs_proto::whatsapp::message::PinInChatMessage::default()),
             ..Default::default()
         };
-        let wrapped_pin = waproto::whatsapp::Message {
-            device_sent_message: Some(Box::new(waproto::whatsapp::message::DeviceSentMessage {
+        let wrapped_pin = wa_rs_proto::whatsapp::Message {
+            device_sent_message: Some(Box::new(wa_rs_proto::whatsapp::message::DeviceSentMessage {
                 destination_jid: Some(String::new()),
-                message: Some(Box::new(waproto::whatsapp::Message {
+                message: Some(Box::new(wa_rs_proto::whatsapp::Message {
                     view_once_message: Some(Box::new(
-                        waproto::whatsapp::message::FutureProofMessage {
+                        wa_rs_proto::whatsapp::message::FutureProofMessage {
                             message: Some(Box::new(inner_pin)),
                         },
                     )),

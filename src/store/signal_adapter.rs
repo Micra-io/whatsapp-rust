@@ -3,15 +3,15 @@ use crate::store::signal_cache::SignalStoreCache;
 use async_lock::RwLock;
 use async_trait::async_trait;
 use std::sync::Arc;
-use wacore::libsignal::protocol::{
+use wa_rs_core::libsignal::protocol::{
     Direction, IdentityChange, IdentityKey, IdentityKeyPair, IdentityKeyStore, PreKeyId,
     PreKeyRecord, PreKeyStore, ProtocolAddress, SessionRecord, SessionStore, SignalProtocolError,
     SignedPreKeyId, SignedPreKeyRecord, SignedPreKeyStore,
 };
 
-use wacore::libsignal::store::record_helpers as wacore_record;
-use wacore::libsignal::store::sender_key_name::SenderKeyName;
-use wacore::libsignal::store::{
+use wa_rs_core::libsignal::store::record_helpers as wa_rs_core_record;
+use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
+use wa_rs_core::libsignal::store::{
     PreKeyStore as WacorePreKeyStore, SignedPreKeyStore as WacoreSignedPreKeyStore,
 };
 
@@ -63,14 +63,14 @@ impl SignalProtocolStoreAdapter {
 
     pub fn as_signal_stores(
         &mut self,
-    ) -> wacore::send::SignalStores<
+    ) -> wa_rs_core::send::SignalStores<
         '_,
         SessionAdapter,
         IdentityAdapter,
         PreKeyAdapter,
         SignedPreKeyAdapter,
     > {
-        wacore::send::SignalStores {
+        wa_rs_core::send::SignalStores {
             session_store: &mut self.session_store,
             identity_store: &mut self.identity_store,
             prekey_store: &mut self.pre_key_store,
@@ -183,7 +183,7 @@ impl IdentityKeyStore for IdentityAdapter {
             Some(data) if !data.is_empty() => {
                 // Cache and backend store raw 32-byte DJB public key bytes
                 let public_key =
-                    wacore::libsignal::protocol::PublicKey::from_djb_public_key_bytes(&data)?;
+                    wa_rs_core::libsignal::protocol::PublicKey::from_djb_public_key_bytes(&data)?;
                 Ok(Some(IdentityKey::new(public_key)))
             }
             _ => Ok(None),
@@ -200,7 +200,7 @@ impl PreKeyStore for PreKeyAdapter {
             .await
             .map_err(signal_err("backend"))?
             .ok_or(SignalProtocolError::InvalidPreKeyId)
-            .and_then(wacore_record::prekey_structure_to_record)
+            .and_then(wa_rs_core_record::prekey_structure_to_record)
     }
     async fn save_pre_key(
         &mut self,
@@ -208,7 +208,7 @@ impl PreKeyStore for PreKeyAdapter {
         record: &PreKeyRecord,
     ) -> Result<(), SignalProtocolError> {
         let device = self.0.device.read().await;
-        let structure = wacore_record::prekey_record_to_structure(record)?;
+        let structure = wa_rs_core_record::prekey_record_to_structure(record)?;
         WacorePreKeyStore::store_prekey(&*device, prekey_id.into(), structure, false)
             .await
             .map_err(signal_err("backend"))
@@ -233,7 +233,7 @@ impl SignedPreKeyStore for SignedPreKeyAdapter {
             .await
             .map_err(signal_err("backend"))?
             .ok_or(SignalProtocolError::InvalidSignedPreKeyId)
-            .and_then(wacore_record::signed_prekey_structure_to_record)
+            .and_then(wa_rs_core_record::signed_prekey_structure_to_record)
     }
     async fn save_signed_pre_key(
         &mut self,
@@ -246,12 +246,12 @@ impl SignedPreKeyStore for SignedPreKeyAdapter {
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-impl wacore::libsignal::protocol::SenderKeyStore for SenderKeyAdapter {
+impl wa_rs_core::libsignal::protocol::SenderKeyStore for SenderKeyAdapter {
     async fn store_sender_key(
         &mut self,
         sender_key_name: &SenderKeyName,
-        record: wacore::libsignal::protocol::SenderKeyRecord,
-    ) -> wacore::libsignal::protocol::error::Result<()> {
+        record: wa_rs_core::libsignal::protocol::SenderKeyRecord,
+    ) -> wa_rs_core::libsignal::protocol::error::Result<()> {
         self.0.cache.put_sender_key(sender_key_name, record).await;
         Ok(())
     }
@@ -259,8 +259,8 @@ impl wacore::libsignal::protocol::SenderKeyStore for SenderKeyAdapter {
     async fn load_sender_key(
         &self,
         sender_key_name: &SenderKeyName,
-    ) -> wacore::libsignal::protocol::error::Result<
-        Option<wacore::libsignal::protocol::SenderKeyRecord>,
+    ) -> wa_rs_core::libsignal::protocol::error::Result<
+        Option<wa_rs_core::libsignal::protocol::SenderKeyRecord>,
     > {
         let device = self.0.device.read().await;
         self.0

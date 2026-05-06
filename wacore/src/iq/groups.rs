@@ -6,9 +6,9 @@ use crate::request::InfoQuery;
 use anyhow::{Result, anyhow};
 use std::num::NonZeroU32;
 use typed_builder::TypedBuilder;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, Server};
-use wacore_binary::{Node, NodeContent, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{Node, NodeContent, NodeRef};
 
 // Re-export AddressingMode from types::message for convenience
 pub use crate::types::message::AddressingMode;
@@ -763,7 +763,7 @@ impl ProtocolNode for GroupInfoResponse {
     }
 
     fn try_from_node_ref(node: &NodeRef<'_>) -> Result<Self> {
-        use wacore_binary::NodeContentRef;
+        use wa_rs_binary::NodeContentRef;
         if node.tag != "group" {
             return Err(anyhow!("expected <group>, got <{}>", node.tag));
         }
@@ -1156,9 +1156,9 @@ impl crate::protocol::ProtocolNode for ParticipantChangeResponse {
         "participant"
     }
 
-    fn into_node(self) -> ::wacore_binary::node::Node {
+    fn into_node(self) -> ::wa_rs_binary::node::Node {
         let mut builder =
-            ::wacore_binary::builder::NodeBuilder::new("participant").attr("jid", &self.jid);
+            ::wa_rs_binary::builder::NodeBuilder::new("participant").attr("jid", &self.jid);
         if let Some(s) = self.status {
             builder = builder.attr("type", s);
         }
@@ -1172,7 +1172,7 @@ impl crate::protocol::ProtocolNode for ParticipantChangeResponse {
             builder = builder.attr("username", u);
         }
         if let Some(ar) = self.add_request {
-            builder = builder.children([::wacore_binary::builder::NodeBuilder::new("add_request")
+            builder = builder.children([::wa_rs_binary::builder::NodeBuilder::new("add_request")
                 .attr("code", ar.code)
                 .attr("expiration", ar.expiration)
                 .build()]);
@@ -1180,7 +1180,7 @@ impl crate::protocol::ProtocolNode for ParticipantChangeResponse {
         builder.build()
     }
 
-    fn try_from_node_ref(node: &::wacore_binary::node::NodeRef<'_>) -> ::anyhow::Result<Self> {
+    fn try_from_node_ref(node: &::wa_rs_binary::node::NodeRef<'_>) -> ::anyhow::Result<Self> {
         if node.tag != "participant" {
             return Err(::anyhow::anyhow!(
                 "expected <participant>, got <{}>",

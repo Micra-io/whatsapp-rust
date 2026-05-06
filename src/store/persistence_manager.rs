@@ -8,7 +8,7 @@ use log::{debug, error};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
-use wacore::runtime::{AbortHandle, Runtime, ShutdownSignal, wait_for_shutdown};
+use wa_rs_core::runtime::{AbortHandle, Runtime, ShutdownSignal, wait_for_shutdown};
 
 pub struct PersistenceManager {
     device: Arc<RwLock<Device>>,
@@ -268,7 +268,7 @@ impl PersistenceManager {
 mod tests {
     use super::*;
     use crate::runtime_impl::TokioRuntime;
-    use wacore::time::Instant;
+    use wa_rs_core::time::Instant;
 
     // Saver must observe shutdown.notify, run a final flush, and exit so the
     // AbortHandle-backed task doesn't outlive the Bot.
@@ -281,7 +281,7 @@ mod tests {
                 .expect("pm init"),
         );
 
-        let notifier = wacore::runtime::ShutdownNotifier::new();
+        let notifier = wa_rs_core::runtime::ShutdownNotifier::new();
         let shutdown_signal = notifier.subscribe();
 
         let runtime: Arc<dyn Runtime> = Arc::new(TokioRuntime);

@@ -17,9 +17,9 @@ dhat = { version = "0.3", optional = true }
 futures = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time"] }
 uuid = { workspace = true, features = ["v4"] }
-wacore = { path = "../../wacore" }
-wacore-binary = { path = "../../wacore/binary" }
-whatsapp-rust = { path = "../..", default-features = false, features = [
+wa-rs-core = { path = "../../wacore" }
+wa-rs-binary = { path = "../../wacore/binary" }
+wa-rs = { path = "../..", default-features = false, features = [
   "danger-skip-cert-chain-verify",
   "danger-skip-tls-verify",
   "debug-diagnostics",
@@ -29,10 +29,10 @@ whatsapp-rust = { path = "../..", default-features = false, features = [
   "tokio-native",
   "signal",
 ] }
-whatsapp-rust-tokio-transport = { path = "../../transports/tokio-transport", features = [
+wa-rs-tokio-transport = { path = "../../transports/tokio-transport", features = [
   "danger-skip-tls-verify",
 ] }
-whatsapp-rust-ureq-http-client = { path = "../../http_clients/ureq-client", features = [
+wa-rs-ureq-http = { path = "../../http_clients/ureq-client", features = [
   "danger-skip-tls-verify",
 ] }
 

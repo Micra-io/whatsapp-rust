@@ -4,8 +4,8 @@
 
 use crate::protocol::ProtocolNode;
 use anyhow::Result;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Node, NodeRef};
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Node, NodeRef};
 
 /// Unified session telemetry node.
 ///

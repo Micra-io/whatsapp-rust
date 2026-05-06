@@ -3,11 +3,11 @@ use e2e_tests::{
 };
 use log::info;
 use std::sync::Arc;
-use wacore::store::traits::TcTokenEntry;
-use wacore::types::events::Event;
-use wacore_binary::OwnedNodeRef;
-use wacore_binary::node::Node;
-use whatsapp_rust::{NodeFilter, SendOptions};
+use wa_rs_core::store::traits::TcTokenEntry;
+use wa_rs_core::types::events::Event;
+use wa_rs_binary::OwnedNodeRef;
+use wa_rs_binary::node::Node;
+use wa_rs::{NodeFilter, SendOptions};
 
 fn has_child(node: &Node, tag: &str) -> bool {
     node.children()
@@ -26,7 +26,7 @@ fn has_descendant(node: &Node, tag: &str) -> bool {
 async fn send_first_message_and_expect_463(
     sender: &TestClient,
     recipient: &mut TestClient,
-    recipient_jid: &whatsapp_rust::Jid,
+    recipient_jid: &wa_rs::Jid,
     text: &str,
 ) -> anyhow::Result<Arc<OwnedNodeRef>> {
     let msg_id = format!("E2E463{}", uuid::Uuid::new_v4().simple());
@@ -36,7 +36,7 @@ async fn send_first_message_and_expect_463(
 async fn send_message_and_expect_463_with_id(
     sender: &TestClient,
     recipient: &mut TestClient,
-    recipient_jid: &whatsapp_rust::Jid,
+    recipient_jid: &wa_rs::Jid,
     text: &str,
     msg_id: String,
 ) -> anyhow::Result<Arc<OwnedNodeRef>> {
@@ -76,7 +76,7 @@ async fn send_message_and_expect_463_with_id(
     recipient
         .assert_no_event(
             5,
-            move |e| matches!(e, wacore::types::events::Event::Message(msg, _) if msg.conversation.as_deref() == Some(expected_text.as_str())),
+            move |e| matches!(e, wa_rs_core::types::events::Event::Message(msg, _) if msg.conversation.as_deref() == Some(expected_text.as_str())),
             "restricted recipient should not receive first-contact message without privacy token",
         )
         .await?;
@@ -325,7 +325,7 @@ async fn test_prune_expired_tc_tokens_removes_only_stale_entries() -> anyhow::Re
     // Use timestamps that are unambiguously expired/fresh under any AB prop config:
     // - expired: timestamp 1 (1970) — expired under any bucket window
     // - fresh: current time — valid under any config
-    let now = wacore::time::now_secs();
+    let now = wa_rs_core::time::now_secs();
     let expired_key = format!("expired_{}", uuid::Uuid::new_v4());
     let fresh_key = format!("fresh_{}", uuid::Uuid::new_v4());
 
@@ -715,7 +715,7 @@ async fn test_clearing_nct_salt_locally_makes_first_contact_fail_again() -> anyh
     client_b
         .client
         .persistence_manager()
-        .process_command(whatsapp_rust::store::commands::DeviceCommand::SetNctSalt(
+        .process_command(wa_rs::store::commands::DeviceCommand::SetNctSalt(
             None,
         ))
         .await;

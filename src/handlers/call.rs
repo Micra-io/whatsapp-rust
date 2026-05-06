@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use log::{debug, warn};
-use wacore::stanza::call::{build_offer_ack_receipt, parse_call_stanza};
-use wacore::types::call::{CallAction, IncomingCall};
-use wacore::types::events::Event;
-use wacore_binary::{OwnedNodeRef, Server};
+use wa_rs_core::stanza::call::{build_offer_ack_receipt, parse_call_stanza};
+use wa_rs_core::types::call::{CallAction, IncomingCall};
+use wa_rs_core::types::events::Event;
+use wa_rs_binary::{OwnedNodeRef, Server};
 
 use crate::client::Client;
 
@@ -69,15 +69,15 @@ mod tests {
     use super::*;
     use crate::test_utils::{MockHttpClient, create_test_backend, node_to_owned_ref};
     use std::sync::Arc;
-    use wacore::types::events::{ChannelEventHandler, Event};
-    use wacore_binary::builder::NodeBuilder;
-    use wacore_binary::{Jid, Server};
+    use wa_rs_core::types::events::{ChannelEventHandler, Event};
+    use wa_rs_binary::builder::NodeBuilder;
+    use wa_rs_binary::{Jid, Server};
 
     fn fake_caller_lid() -> Jid {
         Jid::new("111111111111111", Server::Lid)
     }
 
-    fn offer_stanza() -> wacore_binary::Node {
+    fn offer_stanza() -> wa_rs_binary::Node {
         NodeBuilder::new("call")
             .attr("from", fake_caller_lid())
             .attr("id", "STANZA-ID-0001")
@@ -167,7 +167,7 @@ mod tests {
         use async_trait::async_trait;
         use bytes::Bytes;
         use std::sync::atomic::{AtomicUsize, Ordering};
-        use wacore::handshake::NoiseCipher;
+        use wa_rs_core::handshake::NoiseCipher;
 
         struct CountingTransport {
             count: Arc<AtomicUsize>,

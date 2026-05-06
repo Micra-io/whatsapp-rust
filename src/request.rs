@@ -6,10 +6,10 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 use thiserror::Error;
-use wacore::runtime::timeout as rt_timeout;
-use wacore_binary::Node;
+use wa_rs_core::runtime::timeout as rt_timeout;
+use wa_rs_binary::Node;
 
-pub use wacore::request::{InfoQuery, InfoQueryType, RequestUtils};
+pub use wa_rs_core::request::{InfoQuery, InfoQueryType, RequestUtils};
 
 #[derive(Debug, Error)]
 pub enum IqError {
@@ -35,16 +35,16 @@ pub enum IqError {
     ParseError(#[from] anyhow::Error),
 }
 
-impl From<wacore::request::IqError> for IqError {
-    fn from(err: wacore::request::IqError) -> Self {
+impl From<wa_rs_core::request::IqError> for IqError {
+    fn from(err: wa_rs_core::request::IqError) -> Self {
         match err {
-            wacore::request::IqError::Timeout => Self::Timeout,
-            wacore::request::IqError::NotConnected => Self::NotConnected,
-            wacore::request::IqError::Disconnected(node) => Self::Disconnected(node),
-            wacore::request::IqError::ServerError { code, text } => {
+            wa_rs_core::request::IqError::Timeout => Self::Timeout,
+            wa_rs_core::request::IqError::NotConnected => Self::NotConnected,
+            wa_rs_core::request::IqError::Disconnected(node) => Self::Disconnected(node),
+            wa_rs_core::request::IqError::ServerError { code, text } => {
                 Self::ServerError { code, text }
             }
-            wacore::request::IqError::InternalChannelClosed => Self::InternalChannelClosed,
+            wa_rs_core::request::IqError::InternalChannelClosed => Self::InternalChannelClosed,
         }
     }
 }
@@ -104,13 +104,13 @@ impl Client {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use wacore::request::{InfoQuery, InfoQueryType};
-    /// use wacore_binary::builder::NodeBuilder;
-    /// use wacore_binary::NodeContent;
-    /// use wacore_binary::{Jid, Server};
+    /// use wa_rs_core::request::{InfoQuery, InfoQueryType};
+    /// use wa_rs_binary::builder::NodeBuilder;
+    /// use wa_rs_binary::NodeContent;
+    /// use wa_rs_binary::{Jid, Server};
     ///
     /// // This is a simplified example - real usage requires proper setup
-    /// # async fn example(client: &whatsapp_rust::Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// # async fn example(client: &wa_rs::Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let query_node = NodeBuilder::new("presence")
     ///     .attr("type", "available")
     ///     .build();
@@ -135,7 +135,7 @@ impl Client {
     pub async fn send_iq(
         &self,
         query: InfoQuery<'_>,
-    ) -> Result<Arc<wacore_binary::OwnedNodeRef>, IqError> {
+    ) -> Result<Arc<wa_rs_binary::OwnedNodeRef>, IqError> {
         let default_timeout = Duration::from_secs(75);
         let iq_timeout = query.timeout.unwrap_or(default_timeout);
         let req_id = query
@@ -158,14 +158,14 @@ impl Client {
     /// # Example
     ///
     /// ```ignore
-    /// use wacore::iq::groups::GroupQueryIq;
+    /// use wa_rs_core::iq::groups::GroupQueryIq;
     ///
     /// let group_info = client.execute(GroupQueryIq::new(&group_jid)).await?;
     /// println!("Group subject: {}", group_info.subject);
     /// ```
     pub async fn execute<S>(&self, spec: S) -> Result<S::Response, IqError>
     where
-        S: wacore::iq::spec::IqSpec,
+        S: wa_rs_core::iq::spec::IqSpec,
     {
         let req_id = self.generate_request_id();
 
@@ -203,7 +203,7 @@ impl Client {
         req_id: String,
         timeout: Duration,
         send_fn: F,
-    ) -> Result<Arc<wacore_binary::OwnedNodeRef>, IqError>
+    ) -> Result<Arc<wa_rs_binary::OwnedNodeRef>, IqError>
     where
         F: std::future::Future<Output = Result<(), crate::client::ClientError>>,
     {
@@ -219,7 +219,7 @@ impl Client {
 
         // Per-connection: pending IQ requests are bound to the current socket;
         // a reconnect aborts them (sender retries on the new connection).
-        let shutdown = wacore::runtime::wait_for_shutdown(&self.connection_shutdown_signal());
+        let shutdown = wa_rs_core::runtime::wait_for_shutdown(&self.connection_shutdown_signal());
 
         if !self.is_running.load(Ordering::Acquire) {
             self.response_waiters.lock().await.remove(&req_id);

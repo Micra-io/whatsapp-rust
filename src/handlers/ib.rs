@@ -5,8 +5,8 @@ use async_trait::async_trait;
 use futures::FutureExt;
 use log::{debug, info, warn};
 use std::sync::Arc;
-use wacore::appstate::patch_decode::WAPatchName;
-use wacore::iq::dirty::{DirtyBit, DirtyType};
+use wa_rs_core::appstate::patch_decode::WAPatchName;
+use wa_rs_core::iq::dirty::{DirtyBit, DirtyType};
 
 /// Handler for `<ib>` (information broadcast) stanzas.
 ///
@@ -28,7 +28,7 @@ impl StanzaHandler for IbHandler {
     async fn handle(
         &self,
         client: Arc<Client>,
-        node: Arc<wacore_binary::OwnedNodeRef>,
+        node: Arc<wa_rs_binary::OwnedNodeRef>,
         _cancelled: &mut bool,
     ) -> bool {
         handle_ib_impl(client, node.get()).await;
@@ -36,7 +36,7 @@ impl StanzaHandler for IbHandler {
     }
 }
 
-async fn handle_ib_impl(client: Arc<Client>, node: &wacore_binary::NodeRef<'_>) {
+async fn handle_ib_impl(client: Arc<Client>, node: &wa_rs_binary::NodeRef<'_>) {
     for child in node.children().unwrap_or_default() {
         match child.tag.as_ref() {
             "dirty" => {
@@ -195,7 +195,7 @@ async fn handle_ib_impl(client: Arc<Client>, node: &wacore_binary::NodeRef<'_>) 
                             _ = client_clone.runtime.sleep(std::time::Duration::from_secs(2)).fuse() => {
                                 client_clone.flush_pending_device_sync().await;
                             }
-                            _ = wacore::runtime::wait_for_shutdown(&shutdown).fuse() => {}
+                            _ = wa_rs_core::runtime::wait_for_shutdown(&shutdown).fuse() => {}
                         }
                     }))
                     .detach();

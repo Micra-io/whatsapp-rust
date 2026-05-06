@@ -1,6 +1,6 @@
 //! Portable in-process cache (moka replacement for WASM).
 //!
-//! Uses [`wacore::time::now_millis`] for time checks — no `std::time::Instant`.
+//! Uses [`wa_rs_core::time::now_millis`] for time checks — no `std::time::Instant`.
 //! API mirrors moka's [`Cache`](moka::future::Cache).
 //!
 //! `get_with` / `get_with_by_ref` are single-flight: concurrent inits for the
@@ -144,7 +144,7 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
-        let now_ms = wacore::time::now_millis();
+        let now_ms = wa_rs_core::time::now_millis();
 
         // Fast path (no TTI): read lock only, no write needed.
         if self.tti_ms.is_none() {
@@ -177,7 +177,7 @@ where
     }
 
     pub async fn insert(&self, key: K, value: V) {
-        let now_ms = wacore::time::now_millis();
+        let now_ms = wa_rs_core::time::now_millis();
         let mut guard = self.inner.write().await;
 
         if let Some(entry) = guard.map.get_mut(&key) {
@@ -214,7 +214,7 @@ where
 
     /// Insert and return a clone of the value in one write lock.
     async fn insert_and_return(&self, key: K, value: V) -> V {
-        let now_ms = wacore::time::now_millis();
+        let now_ms = wa_rs_core::time::now_millis();
         let mut guard = self.inner.write().await;
 
         if let Some(entry) = guard.map.get_mut(&key) {
@@ -257,7 +257,7 @@ where
         K: Borrow<Q>,
         Q: Hash + Eq + ?Sized,
     {
-        let now_ms = wacore::time::now_millis();
+        let now_ms = wa_rs_core::time::now_millis();
         let mut guard = self.inner.write().await;
         let owned_key = Self::find_key(&guard, key)?;
         let entry = guard.remove_key(&owned_key)?;
@@ -385,7 +385,7 @@ where
 
     /// Evict expired entries and clean up unused init locks.
     pub async fn run_pending_tasks(&self) {
-        let now_ms = wacore::time::now_millis();
+        let now_ms = wa_rs_core::time::now_millis();
         let mut guard = self.inner.write().await;
 
         guard.map.retain(|_, entry| !self.is_expired(entry, now_ms));

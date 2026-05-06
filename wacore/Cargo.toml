@@ -1,5 +1,5 @@
 [package]
-name = "wacore"
+name = "wa-rs-core"
 version = "0.6.0"
 edition = "2024"
 authors = ["João Lucas <jlucaso@hotmail.com>"]
@@ -9,12 +9,12 @@ description = "Core WhatsApp protocol implementation without runtime dependencie
 
 [features]
 default = ["simd"]
-simd = ["wacore-appstate/simd"]
+simd = ["wa-rs-appstate/simd"]
 debug-diagnostics = []
 debug-snapshots = []
 # Disables XEdDSA verification of the server's Noise cert chain. Required
 # for the e2e mock server (self-signed certs). NEVER enable in prod.
-danger-skip-cert-chain-verify = ["wacore-noise/danger-skip-cert-chain-verify"]
+danger-skip-cert-chain-verify = ["wa-rs-noise/danger-skip-cert-chain-verify"]
 # Enable JS-based random number generation for wasm32 targets.
 # Activates getrandom's wasm_js backend so rand works in the browser.
 js = ["getrandom/wasm_js"]
@@ -51,12 +51,12 @@ subtle = { workspace = true }
 thiserror = { workspace = true }
 typed-builder = "0.23"
 uuid = { workspace = true, features = ["v4"] }
-wacore-appstate = { workspace = true }
-wacore-binary = { workspace = true, features = ["serde"] }
-wacore-derive = { workspace = true }
-wacore-libsignal = { workspace = true }
-wacore-noise = { workspace = true }
-waproto = { workspace = true }
+wa-rs-appstate = { workspace = true }
+wa-rs-binary = { workspace = true, features = ["serde"] }
+wa-rs-derive = { workspace = true }
+wa-rs-libsignal = { workspace = true }
+wa-rs-noise = { workspace = true }
+wa-rs-proto = { workspace = true }
 
 [dev-dependencies]
 aes-gcm = { workspace = true }

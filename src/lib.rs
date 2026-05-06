@@ -1,12 +1,12 @@
-pub use wacore::client_profile::ClientProfile;
-pub use wacore::{
+pub use wa_rs_core::client_profile::ClientProfile;
+pub use wa_rs_core::{
     iq::privacy as privacy_settings, proto_helpers, sticker_pack, store::traits, webp,
 };
-pub use wacore_binary::CompactString;
-pub use wacore_binary::OwnedNodeRef;
-pub use wacore_binary::builder::NodeBuilder;
-pub use wacore_binary::{Jid, Server};
-pub use waproto;
+pub use wa_rs_binary::CompactString;
+pub use wa_rs_binary::OwnedNodeRef;
+pub use wa_rs_binary::builder::NodeBuilder;
+pub use wa_rs_binary::{Jid, Server};
+pub use wa_rs_proto;
 
 pub mod cache;
 #[cfg(not(feature = "moka-cache"))]
@@ -42,7 +42,7 @@ pub mod request;
 pub mod runtime_impl;
 #[cfg(feature = "tokio-runtime")]
 pub use runtime_impl::TokioRuntime;
-pub use wacore::runtime::Runtime;
+pub use wa_rs_core::runtime::Runtime;
 pub mod send;
 pub use send::{PinDuration, RevokeType, SendOptions, SendResult};
 pub mod session;

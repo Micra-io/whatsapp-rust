@@ -1,8 +1,8 @@
 use crate::client::Client;
 use crate::features::mex::{MexError, MexRequest};
 use std::collections::HashMap;
-use wacore::client::context::GroupInfo;
-use wacore::iq::groups::{
+use wa_rs_core::client::context::GroupInfo;
+use wa_rs_core::iq::groups::{
     AcceptGroupInviteIq, AcceptGroupInviteV4Iq, AcknowledgeGroupIq, AddParticipantsIq,
     BatchGetGroupInfoIq, CancelMembershipRequestsIq, DemoteParticipantsIq, GetGroupInviteInfoIq,
     GetGroupInviteLinkIq, GetGroupProfilePicturesIq, GetMembershipRequestsIq, GroupCreateIq,
@@ -12,11 +12,11 @@ use wacore::iq::groups::{
     SetGroupHistoryIq, SetGroupLockedIq, SetGroupMembershipApprovalIq, SetGroupSubjectIq,
     SetMemberAddModeIq, SetNoFrequentlyForwardedIq, normalize_participants,
 };
-use wacore::types::message::AddressingMode;
-use wacore_binary::{Jid, JidExt as _};
+use wa_rs_core::types::message::AddressingMode;
+use wa_rs_binary::{Jid, JidExt as _};
 
-use wacore::iq::groups::BatchGroupInfoResult as RawBatchResult;
-pub use wacore::iq::groups::{
+use wa_rs_core::iq::groups::BatchGroupInfoResult as RawBatchResult;
+pub use wa_rs_core::iq::groups::{
     GroupCreateOptions, GroupDescription, GroupJoinError, GroupParticipantOptions,
     GroupProfilePicture, GroupSubject, GrowthLockInfo, InviteInfoError, JoinGroupResult,
     MemberAddMode, MemberLinkMode, MemberShareHistoryMode, MembershipApprovalMode,
@@ -197,7 +197,7 @@ impl<'a> Groups<'a> {
         let n = group.participants.len();
         let is_lid = group.addressing_mode == AddressingMode::Lid;
         let mut participants: Vec<Jid> = Vec::with_capacity(n);
-        let mut lid_to_pn_map: HashMap<wacore_binary::CompactString, Jid> = if is_lid {
+        let mut lid_to_pn_map: HashMap<wa_rs_binary::CompactString, Jid> = if is_lid {
             HashMap::with_capacity(n)
         } else {
             HashMap::new()
@@ -296,7 +296,7 @@ impl<'a> Groups<'a> {
         if self
             .client
             .ab_props()
-            .is_enabled(wacore::iq::props::config_codes::PRIVACY_TOKEN_ON_GROUP_CREATE)
+            .is_enabled(wa_rs_core::iq::props::config_codes::PRIVACY_TOKEN_ON_GROUP_CREATE)
             .await
         {
             self.attach_tokens_to_participants(&mut options.participants)
@@ -347,7 +347,7 @@ impl<'a> Groups<'a> {
         let iq = if self
             .client
             .ab_props()
-            .is_enabled(wacore::iq::props::config_codes::PRIVACY_TOKEN_ON_GROUP_PARTICIPANT_ADD)
+            .is_enabled(wa_rs_core::iq::props::config_codes::PRIVACY_TOKEN_ON_GROUP_PARTICIPANT_ADD)
             .await
         {
             let options = self.resolve_participant_tokens(participants).await;
@@ -491,7 +491,7 @@ impl<'a> Groups<'a> {
         admin_jid: &Jid,
     ) -> Result<JoinGroupResult, anyhow::Error> {
         if expiration > 0 {
-            let now = wacore::time::now_millis() / 1000;
+            let now = wa_rs_core::time::now_millis() / 1000;
             if expiration < now {
                 anyhow::bail!("V4 invite has expired (expiration={expiration}, now={now})");
             }
@@ -674,10 +674,10 @@ impl<'a> Groups<'a> {
         jids: Vec<Jid>,
     ) -> Result<Vec<BatchGroupResult>, anyhow::Error> {
         anyhow::ensure!(
-            jids.len() <= wacore::iq::groups::BATCH_GROUP_INFO_LIMIT,
+            jids.len() <= wa_rs_core::iq::groups::BATCH_GROUP_INFO_LIMIT,
             "batch_get_info: {} groups exceeds limit of {}",
             jids.len(),
-            wacore::iq::groups::BATCH_GROUP_INFO_LIMIT,
+            wa_rs_core::iq::groups::BATCH_GROUP_INFO_LIMIT,
         );
         let raw = self.client.execute(BatchGetGroupInfoIq::new(jids)).await?;
         Ok(raw
@@ -700,10 +700,10 @@ impl<'a> Groups<'a> {
         picture_type: PictureType,
     ) -> Result<Vec<GroupProfilePicture>, anyhow::Error> {
         anyhow::ensure!(
-            group_jids.len() <= wacore::iq::groups::BATCH_PROFILE_PICTURES_LIMIT,
+            group_jids.len() <= wa_rs_core::iq::groups::BATCH_PROFILE_PICTURES_LIMIT,
             "get_profile_pictures: {} groups exceeds limit of {}",
             group_jids.len(),
-            wacore::iq::groups::BATCH_PROFILE_PICTURES_LIMIT,
+            wa_rs_core::iq::groups::BATCH_PROFILE_PICTURES_LIMIT,
         );
         let groups = group_jids
             .into_iter()
@@ -724,7 +724,7 @@ impl<'a> Groups<'a> {
             .client
             .mex()
             .mutate(MexRequest {
-                doc: wacore::iq::mex_ids::groups::UPDATE_GROUP_PROPERTY,
+                doc: wa_rs_core::iq::mex_ids::groups::UPDATE_GROUP_PROPERTY,
                 variables: serde_json::json!({
                     "group_id": jid.to_string(),
                     "update": update,
@@ -762,7 +762,7 @@ impl<'a> Groups<'a> {
                 "update_member_label requires a group JID, got {group_jid}"
             ));
         }
-        let msg = wacore::send::build_member_label_message(label.into(), wacore::time::now_secs());
+        let msg = wa_rs_core::send::build_member_label_message(label.into(), wa_rs_core::time::now_secs());
         self.client
             .send_message_impl(group_jid.clone(), &msg, None, false, false, None, vec![])
             .await
@@ -823,7 +823,7 @@ impl<'a> Groups<'a> {
     async fn only_check_lid(&self) -> bool {
         self.client
             .ab_props()
-            .is_enabled(wacore::iq::props::config_codes::PRIVACY_TOKEN_ONLY_CHECK_LID)
+            .is_enabled(wa_rs_core::iq::props::config_codes::PRIVACY_TOKEN_ONLY_CHECK_LID)
             .await
     }
 
@@ -844,7 +844,7 @@ impl<'a> Groups<'a> {
 
     /// Returns the tc_token if present and not expired.
     async fn lookup_valid_token(&self, token_key: &str) -> Option<Vec<u8>> {
-        use wacore::iq::tctoken::is_tc_token_expired_with;
+        use wa_rs_core::iq::tctoken::is_tc_token_expired_with;
         let tc_config = self.client.tc_token_config().await;
         let backend = self.client.persistence_manager.backend();
         match backend.get_tc_token(token_key).await {
@@ -1021,5 +1021,5 @@ mod tests {
         assert!(extract_invite_code("whatsapp://chat/?code=&other=1").is_none());
     }
 
-    // Protocol-level tests (node building, parsing, validation) are in wacore/src/iq/groups.rs
+    // Protocol-level tests (node building, parsing, validation) are in wa_rs_core/src/iq/groups.rs
 }

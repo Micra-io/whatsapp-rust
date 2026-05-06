@@ -1,5 +1,5 @@
 [package]
-name = "wacore-libsignal"
+name = "wa-rs-libsignal"
 version = "0.6.0"
 edition = "2024"
 authors = ["João Lucas <jlucaso@hotmail.com>"]
@@ -31,7 +31,7 @@ sha2 = { workspace = true }
 subtle = "2.6.1"
 thiserror = { workspace = true }
 uuid = { workspace = true }
-waproto = { workspace = true }
+wa-rs-proto = { workspace = true }
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 [dev-dependencies]

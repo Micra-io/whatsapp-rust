@@ -1,10 +1,10 @@
 use crate::client::Client;
 use async_trait::async_trait;
 use std::collections::HashMap;
-use wacore::client::context::{GroupInfo, SendContextResolver};
-use wacore::iq::prekeys::PreKeyFetchReason;
-use wacore::libsignal::protocol::PreKeyBundle;
-use wacore_binary::Jid;
+use wa_rs_core::client::context::{GroupInfo, SendContextResolver};
+use wa_rs_core::iq::prekeys::PreKeyFetchReason;
+use wa_rs_core::libsignal::protocol::PreKeyBundle;
+use wa_rs_binary::Jid;
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
@@ -27,12 +27,12 @@ impl SendContextResolver for Client {
         self.fetch_pre_keys(jids, Some(PreKeyFetchReason::Identity))
             .await
             .map_err(|e| {
-                // Re-wrap server errors as wacore::ServerErrorCode so
+                // Re-wrap server errors as wa_rs_core::ServerErrorCode so
                 // encrypt_for_devices can downcast across crate boundaries
                 if let Some(crate::request::IqError::ServerError { code, text }) =
                     e.downcast_ref::<crate::request::IqError>()
                 {
-                    return anyhow::Error::new(wacore::request::ServerErrorCode {
+                    return anyhow::Error::new(wa_rs_core::request::ServerErrorCode {
                         code: *code,
                         text: text.clone(),
                     });

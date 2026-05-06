@@ -19,8 +19,8 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
 use log::{debug, warn};
-use wacore_binary::Node;
-use wacore_binary::builder::NodeBuilder;
+use wa_rs_binary::Node;
+use wa_rs_binary::builder::NodeBuilder;
 
 use crate::client::Client;
 

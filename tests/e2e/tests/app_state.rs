@@ -1,7 +1,7 @@
 use e2e_tests::TestClient;
 use log::info;
-use wacore::types::events::Event;
-use whatsapp_rust::waproto::whatsapp as wa;
+use wa_rs_core::types::events::Event;
+use wa_rs::wa_rs_proto::whatsapp as wa;
 
 // ─── Initial Sync Tests ─────────────────────────────────────────────
 
@@ -280,7 +280,7 @@ async fn test_multi_device_app_state_sync() -> anyhow::Result<()> {
 
     // Use a unique push name each run so the test is idempotent even if the
     // mock server persists push_name state across sessions (like the real server).
-    let new_name = format!("MultiDev_{}", wacore::time::now_millis());
+    let new_name = format!("MultiDev_{}", wa_rs_core::time::now_millis());
     client_a1.client.profile().set_push_name(&new_name).await?;
     info!("A1 set push name to '{new_name}'");
 

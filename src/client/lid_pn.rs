@@ -13,8 +13,8 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use log::debug;
-use wacore::store::traits::LidPnMappingEntry;
-use wacore_binary::Jid;
+use wa_rs_core::store::traits::LidPnMappingEntry;
+use wa_rs_binary::Jid;
 
 use super::Client;
 use crate::lid_pn_cache::{LearningSource, LidPnEntry};
@@ -299,7 +299,7 @@ impl Client {
     /// upgrade Pn → Lid and Hosted → HostedLid when a mapping is known, else
     /// preserve the input.
     pub(crate) async fn resolve_encryption_jid(&self, target: &Jid) -> Jid {
-        use wacore_binary::Server;
+        use wa_rs_binary::Server;
         let lid_server = match target.server {
             Server::Pn => Server::Lid,
             Server::Hosted => Server::HostedLid,
@@ -324,7 +324,7 @@ impl Client {
             let pn_user = self.lid_pn_cache.get_phone_number(&jid.user).await?;
             Some(Jid {
                 user: pn_user.into(),
-                server: wacore_binary::Server::Pn,
+                server: wa_rs_binary::Server::Pn,
                 device: jid.device,
                 agent: jid.agent,
                 integrator: jid.integrator,
@@ -333,7 +333,7 @@ impl Client {
             let lid_user = self.lid_pn_cache.get_current_lid(&jid.user).await?;
             Some(Jid {
                 user: lid_user.into(),
-                server: wacore_binary::Server::Lid,
+                server: wa_rs_binary::Server::Lid,
                 device: jid.device,
                 agent: jid.agent,
                 integrator: jid.integrator,
@@ -350,7 +350,7 @@ impl Client {
     /// SKDM encryption ratcheted the session).
     pub(crate) async fn migrate_signal_sessions_on_lid_discovery(&self, pn: &str, lid: &str) {
         use log::{info, warn};
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::types::jid::JidExt;
 
         let backend = self.persistence_manager.backend();
 
@@ -472,7 +472,7 @@ impl Client {
             return None;
         }
         match self.get_lid_pn_entry(jid).await {
-            Ok(Some(entry)) => Some(Jid::new(entry.lid, wacore_binary::Server::Lid)),
+            Ok(Some(entry)) => Some(Jid::new(entry.lid, wa_rs_binary::Server::Lid)),
             Ok(None) => None,
             Err(e) => {
                 log::warn!(
@@ -492,7 +492,7 @@ mod tests {
     use crate::lid_pn_cache::LearningSource;
     use crate::test_utils::create_test_client;
     use std::sync::Arc;
-    use wacore_binary::Server;
+    use wa_rs_binary::Server;
 
     #[tokio::test]
     async fn test_resolve_encryption_jid_pn_to_lid() {
@@ -646,7 +646,7 @@ mod tests {
     /// backend has, the lookup should still succeed and re-populate the cache.
     #[tokio::test]
     async fn test_get_lid_pn_entry_falls_back_to_backend() {
-        use wacore::store::traits::LidPnMappingEntry;
+        use wa_rs_core::store::traits::LidPnMappingEntry;
 
         let client: Arc<Client> = create_test_client().await;
         let pn = "15555550123";
@@ -741,8 +741,8 @@ mod tests {
     /// newly learned PN. Polls until the detached task completes.
     #[tokio::test]
     async fn test_learn_lid_pn_mappings_batch_online_persists_and_migrates() {
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
-        use wacore_binary::Jid;
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_binary::Jid;
 
         let client: Arc<Client> = create_test_client().await;
         let lid = "200000000077777";
@@ -760,7 +760,7 @@ mod tests {
                     device_id: 3,
                     key_index: None,
                 }],
-                timestamp: wacore::time::now_secs(),
+                timestamp: wa_rs_core::time::now_secs(),
                 phash: None,
                 raw_id: None,
             })
@@ -779,7 +779,7 @@ mod tests {
         // LID key). That strictly happens after both `put_lid_mappings` and
         // `migrate_device_registry_on_lid_discovery`, so observing it
         // guarantees both steps ran.
-        let start = wacore::time::Instant::now();
+        let start = wa_rs_core::time::Instant::now();
         let deadline = std::time::Duration::from_secs(5);
         loop {
             if backend.get_devices(lid).await.unwrap().is_some() {
@@ -818,7 +818,7 @@ mod tests {
     /// fires. Mirrors WA Web's `flushImmediately = false` semantics.
     #[tokio::test]
     async fn test_learn_lid_pn_mappings_batch_offline_skips_persist() {
-        use wacore_binary::Jid;
+        use wa_rs_binary::Jid;
 
         let client: Arc<Client> = create_test_client().await;
         let lid = "200000000009999";

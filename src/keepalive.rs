@@ -6,8 +6,8 @@ use rand::RngExt;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
-use wacore::iq::spec::IqSpec;
-use wacore::protocol::keepalive::{
+use wa_rs_core::iq::spec::IqSpec;
+use wa_rs_core::protocol::keepalive::{
     KEEP_ALIVE_INTERVAL_MAX, KEEP_ALIVE_INTERVAL_MIN, KEEP_ALIVE_RESPONSE_DEADLINE, is_dead_socket,
     ms_since,
 };
@@ -68,14 +68,14 @@ impl Client {
         // wall_rtt_ms feeds the WA Web onClockSkewUpdate formula, which
         // mixes start_ms with serverTime — both halves must be wall-clock.
         // rtt_monotonic is for the log only.
-        let start_ms = wacore::time::now_millis();
-        let rtt_start = wacore::time::Instant::now();
-        let iq = wacore::iq::keepalive::KeepaliveSpec::with_timeout(KEEP_ALIVE_RESPONSE_DEADLINE)
+        let start_ms = wa_rs_core::time::now_millis();
+        let rtt_start = wa_rs_core::time::Instant::now();
+        let iq = wa_rs_core::iq::keepalive::KeepaliveSpec::with_timeout(KEEP_ALIVE_RESPONSE_DEADLINE)
             .build_iq();
         match self.send_iq(iq).await {
             Ok(response_node) => {
                 let rtt_monotonic = rtt_start.elapsed();
-                let wall_rtt_ms = wacore::time::now_millis().saturating_sub(start_ms).max(0);
+                let wall_rtt_ms = wa_rs_core::time::now_millis().saturating_sub(start_ms).max(0);
                 debug!(target: "Client/Keepalive", "Received keepalive pong (RTT: {rtt_monotonic:.2?})");
                 self.unified_session.update_server_time_offset_with_rtt(
                     response_node.get(),
@@ -104,7 +104,7 @@ impl Client {
         loop {
             // Fresh listener each iteration (event_listener is edge-triggered);
             // the Weak underneath stays pinned to this connection's notifier.
-            let shutdown = wacore::runtime::wait_for_shutdown(&shutdown_signal);
+            let shutdown = wa_rs_core::runtime::wait_for_shutdown(&shutdown_signal);
 
             let interval_ms = rand::make_rng::<rand::rngs::StdRng>().random_range(
                 KEEP_ALIVE_INTERVAL_MIN.as_millis()..=KEEP_ALIVE_INTERVAL_MAX.as_millis(),
@@ -153,7 +153,7 @@ impl Client {
                             if sent_msg_ttl > 0 && cleanup_counter >= 12 {
                                 cleanup_counter = 0;
                                 let backend = self.persistence_manager.backend();
-                                let cutoff = wacore::time::now_secs()
+                                let cutoff = wa_rs_core::time::now_secs()
                                     - sent_msg_ttl as i64;
                                 self.runtime.spawn(Box::pin(async move {
                                     if let Err(e) = backend.delete_expired_sent_messages(cutoff).await {
@@ -204,7 +204,7 @@ impl Client {
 mod tests {
     use super::*;
     use crate::socket::error::SocketError;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn test_classify_timeout_is_transient() {
@@ -269,5 +269,5 @@ mod tests {
         );
     }
 
-    // ms_since, is_dead_socket, and constants tests live in wacore::protocol::keepalive
+    // ms_since, is_dead_socket, and constants tests live in wa_rs_core::protocol::keepalive
 }

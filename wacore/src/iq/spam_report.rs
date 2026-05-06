@@ -20,8 +20,8 @@
 use crate::iq::spec::IqSpec;
 use crate::request::InfoQuery;
 use crate::types::spam_report::{SpamReportRequest, SpamReportResult, build_spam_list_node};
-use wacore_binary::{Jid, Server};
-use wacore_binary::{NodeContent, NodeContentRef, NodeRef};
+use wa_rs_binary::{Jid, Server};
+use wa_rs_binary::{NodeContent, NodeContentRef, NodeRef};
 
 // Re-export types for convenience
 pub use crate::types::spam_report::{
@@ -70,7 +70,7 @@ impl IqSpec for SpamReportSpec {
 mod tests {
     use super::*;
     use crate::types::spam_report::SpamFlow;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
     #[test]
     fn test_spam_report_spec_build_iq() {

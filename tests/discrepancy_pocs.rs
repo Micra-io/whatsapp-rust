@@ -4,9 +4,9 @@
 //!
 //! Run with: `cargo test --test discrepancy_pocs`
 
-use wacore::store::device::Device;
-use wacore::types::message::EditAttribute;
-use waproto::whatsapp as wa;
+use wa_rs_core::store::device::Device;
+use wa_rs_core::types::message::EditAttribute;
+use wa_rs_proto::whatsapp as wa;
 
 // A1. EditAttribute::infer_from_message parity with editAttribute(msg, subtype).
 
@@ -89,7 +89,7 @@ fn regression_a4_login_payload_passive_defaults_to_false() {
 
 #[test]
 fn regression_a4_login_payload_passive_is_configurable() {
-    let mut profile = wacore::client_profile::ClientProfile::web();
+    let mut profile = wa_rs_core::client_profile::ClientProfile::web();
     profile.passive_login = true;
     let mut device = Device::new();
     device.set_client_profile(profile);
@@ -112,7 +112,7 @@ fn regression_a5_useragent_phone_id_is_uuid_v4_by_default() {
 
 #[test]
 fn regression_a5_useragent_phone_id_can_be_overridden() {
-    let mut profile = wacore::client_profile::ClientProfile::web();
+    let mut profile = wa_rs_core::client_profile::ClientProfile::web();
     profile.phone_id = Some("deadbeef-0000-0000-0000-000000000000".into());
 
     let mut device = Device::new();
@@ -133,7 +133,7 @@ fn regression_a5_useragent_locale_is_configurable_and_default_is_country_code() 
     assert_eq!(ua.locale_language_iso6391.as_deref(), Some("en"));
     assert_eq!(ua.locale_country_iso31661_alpha2.as_deref(), Some("US"));
 
-    let mut profile = wacore::client_profile::ClientProfile::web();
+    let mut profile = wa_rs_core::client_profile::ClientProfile::web();
     profile.locale_language = "pt".into();
     profile.locale_country = "BR".into();
     let mut device = Device::new();
@@ -158,7 +158,7 @@ fn regression_a6_login_payload_carries_lc_and_lid_db_migrated() {
 
 #[test]
 fn regression_a6_login_counter_increments_via_device_command() {
-    use wacore::store::commands::{DeviceCommand, apply_command_to_device};
+    use wa_rs_core::store::commands::{DeviceCommand, apply_command_to_device};
 
     let mut device = Device::new();
     device.pn = Some("5511999999999@s.whatsapp.net".parse().unwrap());
@@ -173,7 +173,7 @@ fn regression_a6_login_counter_increments_via_device_command() {
 
 #[test]
 fn regression_a11_history_sync_config_advertises_support_flags() {
-    let cfg = wacore::store::device::default_history_sync_config();
+    let cfg = wa_rs_core::store::device::default_history_sync_config();
 
     // Static booleans WA Web's WAWebClientPayload always sends.
     assert_eq!(cfg.inline_initial_payload_in_e2_ee_msg, Some(true));
@@ -223,7 +223,7 @@ fn wa_web_value_mac(
 
 #[test]
 fn regression_a7_content_mac_matches_wa_web_at_short_key_id() {
-    use wacore::appstate::hash::generate_content_mac;
+    use wa_rs_core::appstate::hash::generate_content_mac;
 
     let op = wa::syncd_mutation::SyncdOperation::Set;
     let key = [7u8; 32];
@@ -237,7 +237,7 @@ fn regression_a7_content_mac_matches_wa_web_at_short_key_id() {
 
 #[test]
 fn regression_a7_content_mac_matches_wa_web_at_wrap_boundary() {
-    use wacore::appstate::hash::generate_content_mac;
+    use wa_rs_core::appstate::hash::generate_content_mac;
 
     // ad.length = 256: WA Web encodes octet[7] = 0; the pre-fix Rust code
     // encoded [0,0,0,0,0,0,1,0] (256 BE), which differed.
@@ -258,7 +258,7 @@ fn regression_a7_content_mac_matches_wa_web_at_wrap_boundary() {
 
 #[test]
 fn regression_a3_lthash_lanes_are_little_endian() {
-    use wacore::appstate::lthash::WAPATCH_INTEGRITY;
+    use wa_rs_core::appstate::lthash::WAPATCH_INTEGRITY;
 
     let mac_a = vec![1u8; 32];
     let mac_b = vec![2u8; 32];
@@ -307,9 +307,9 @@ fn build_media_payload(media_key: &[u8; 32], plaintext: &[u8]) -> Vec<u8> {
     type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
     type HmacSha256 = hmac::Hmac<sha2::Sha256>;
 
-    let (iv, cipher_key, mac_key) = wacore::download::DownloadUtils::get_media_keys(
+    let (iv, cipher_key, mac_key) = wa_rs_core::download::DownloadUtils::get_media_keys(
         media_key,
-        wacore::download::MediaType::Image,
+        wa_rs_core::download::MediaType::Image,
     )
     .unwrap();
 
@@ -330,10 +330,10 @@ fn regression_a10_media_decrypt_accepts_valid_mac_roundtrip() {
     let media_key = [42u8; 32];
     let plaintext = b"the quick brown fox jumps over the lazy dog".to_vec();
     let payload = build_media_payload(&media_key, &plaintext);
-    let decoded = wacore::download::DownloadUtils::verify_and_decrypt(
+    let decoded = wa_rs_core::download::DownloadUtils::verify_and_decrypt(
         &payload,
         &media_key,
-        wacore::download::MediaType::Image,
+        wa_rs_core::download::MediaType::Image,
     )
     .expect("valid MAC must decrypt");
     assert_eq!(decoded, plaintext);
@@ -345,15 +345,15 @@ fn regression_a10_media_decrypt_rejects_mac_flipped_at_byte_zero() {
     let mut payload = build_media_payload(&media_key, b"payload");
     let mac_start = payload.len() - 10;
     payload[mac_start] ^= 0x01;
-    let err = wacore::download::DownloadUtils::verify_and_decrypt(
+    let err = wa_rs_core::download::DownloadUtils::verify_and_decrypt(
         &payload,
         &media_key,
-        wacore::download::MediaType::Image,
+        wa_rs_core::download::MediaType::Image,
     )
     .expect_err("tampered MAC must be rejected");
     assert!(matches!(
         err,
-        wacore::download::MediaDecryptionError::InvalidMac
+        wa_rs_core::download::MediaDecryptionError::InvalidMac
     ));
 }
 
@@ -363,14 +363,14 @@ fn regression_a10_media_decrypt_rejects_mac_flipped_at_last_byte() {
     let mut payload = build_media_payload(&media_key, b"payload");
     let last = payload.len() - 1;
     payload[last] ^= 0x80;
-    let err = wacore::download::DownloadUtils::verify_and_decrypt(
+    let err = wa_rs_core::download::DownloadUtils::verify_and_decrypt(
         &payload,
         &media_key,
-        wacore::download::MediaType::Image,
+        wa_rs_core::download::MediaType::Image,
     )
     .expect_err("tampered MAC must be rejected");
     assert!(matches!(
         err,
-        wacore::download::MediaDecryptionError::InvalidMac
+        wa_rs_core::download::MediaDecryptionError::InvalidMac
     ));
 }

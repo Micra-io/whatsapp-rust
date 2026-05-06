@@ -2,16 +2,16 @@ use crate::client::Client;
 use crate::types::message::EditAttribute;
 use anyhow::anyhow;
 use log::debug;
-use wacore::client::context::SendContextResolver;
-use wacore::libsignal::protocol::SignalProtocolError;
-use wacore::types::jid::JidExt;
-use wacore::types::message::AddressingMode;
+use wa_rs_core::client::context::SendContextResolver;
+use wa_rs_core::libsignal::protocol::SignalProtocolError;
+use wa_rs_core::types::jid::JidExt;
+use wa_rs_core::types::message::AddressingMode;
 #[cfg(test)]
-use wacore_binary::DeviceKey;
-use wacore_binary::Node;
-use wacore_binary::builder::NodeBuilder;
-use wacore_binary::{Jid, JidExt as _, Server};
-use waproto::whatsapp as wa;
+use wa_rs_binary::DeviceKey;
+use wa_rs_binary::Node;
+use wa_rs_binary::builder::NodeBuilder;
+use wa_rs_binary::{Jid, JidExt as _, Server};
+use wa_rs_proto::whatsapp as wa;
 
 /// Options for [`Client::send_message_with_options`].
 #[derive(Debug, Clone, Default)]
@@ -304,7 +304,7 @@ impl Client {
         if let Some(exp) = options.ephemeral_expiration
             && exp > 0
         {
-            use wacore::proto_helpers::MessageExt;
+            use wa_rs_core::proto_helpers::MessageExt;
             if !message.set_ephemeral_expiration(exp) {
                 // Bare `conversation` messages have no contextInfo field.
                 log::warn!("Could not set contextInfo.expiration on this message type");
@@ -325,10 +325,10 @@ impl Client {
         // Matches WA Web's OutMessagePublishNewsletterRequest + ContentType mixins.
         if to.is_newsletter() {
             use prost::Message as _;
-            let stanza_type = wacore::send::stanza_type_from_message(&message);
+            let stanza_type = wa_rs_core::send::stanza_type_from_message(&message);
             let (_, meta_node) = infer_stanza_metadata(&message);
             let mut plaintext_builder = NodeBuilder::new("plaintext");
-            if let Some(mt) = wacore::send::media_type_from_message(&message) {
+            if let Some(mt) = wa_rs_core::send::media_type_from_message(&message) {
                 plaintext_builder = plaintext_builder.attr("mediatype", mt);
             }
             let mut children = vec![plaintext_builder.bytes(message.encode_to_vec()).build()];
@@ -345,7 +345,7 @@ impl Client {
         }
 
         let (edit, inferred_meta) = infer_stanza_metadata(&message);
-        let now_unix_secs = wacore::time::now_secs_u64();
+        let now_unix_secs = wa_rs_core::time::now_secs_u64();
         let biz = infer_biz_node(&message, now_unix_secs);
 
         let extra_nodes =
@@ -378,8 +378,8 @@ impl Client {
         recipients: &[Jid],
         options: crate::features::status::StatusSendOptions,
     ) -> Result<SendResult, anyhow::Error> {
-        use wacore::client::context::GroupInfo;
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_core::client::context::GroupInfo;
+        use wa_rs_binary::builder::NodeBuilder;
 
         if recipients.is_empty() {
             return Err(anyhow!("Cannot send status with no recipients"));
@@ -419,7 +419,7 @@ impl Client {
 
         use std::collections::HashMap;
         let mut resolved: Vec<Option<Jid>> = Vec::with_capacity(recipients.len());
-        let mut lid_to_pn_map: HashMap<wacore_binary::CompactString, Jid> =
+        let mut lid_to_pn_map: HashMap<wa_rs_binary::CompactString, Jid> =
             HashMap::with_capacity(recipients.len() + 1);
         for jid in recipients {
             if let Some(lid_jid) = self.resolve_recipient_to_lid(jid).await {
@@ -433,7 +433,7 @@ impl Client {
         }
         lid_to_pn_map.insert(own_lid.user.clone(), own_jid.to_non_ad());
 
-        let participants = wacore::send::assemble_status_participants(resolved, &own_lid)?;
+        let participants = wa_rs_core::send::assemble_status_participants(resolved, &own_lid)?;
         let mut group_info =
             GroupInfo::with_lid_to_pn_map(participants, AddressingMode::Lid, lid_to_pn_map);
 
@@ -443,7 +443,7 @@ impl Client {
         let to_str = to.to_string();
 
         let force_skdm = {
-            use wacore::libsignal::store::sender_key_name::SenderKeyName;
+            use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
             // Sender key name tracks the addressing mode of the group stanza.
             // Since status now uses LID addressing (see send_status_message
             // header), the key is stored under own_lid, matching the address
@@ -476,7 +476,7 @@ impl Client {
         // status. Reactions go through WA Web's addon path and never visit
         // `WAWebEncryptAndSendStatusMsg`; attaching the meta on a reaction
         // gets the stanza NACK'd with 479 (SmaxInvalid). Revokes also skip it.
-        let extra_stanza_nodes = if wacore::send::status_carries_privacy_meta(&message) {
+        let extra_stanza_nodes = if wa_rs_core::send::status_carries_privacy_meta(&message) {
             vec![
                 NodeBuilder::new("meta")
                     .attr("status_setting", options.privacy.as_str())
@@ -486,7 +486,7 @@ impl Client {
             vec![]
         };
 
-        let prepared = match wacore::send::prepare_group_stanza(
+        let prepared = match wa_rs_core::send::prepare_group_stanza(
             &*self.runtime,
             &mut stores,
             self,
@@ -528,7 +528,7 @@ impl Client {
                         self.signal_adapter_from(device_store_arc.clone());
                     let mut stores_retry = store_adapter_retry.as_signal_stores();
 
-                    wacore::send::prepare_group_stanza(
+                    wa_rs_core::send::prepare_group_stanza(
                         &*self.runtime,
                         &mut stores_retry,
                         self,
@@ -602,7 +602,7 @@ impl Client {
     async fn resolve_skdm_targets(
         &self,
         group_jid: &str,
-        group_info: &wacore::client::context::GroupInfo,
+        group_info: &wa_rs_core::client::context::GroupInfo,
         own_sending_jid: &Jid,
     ) -> Option<Vec<Jid>> {
         use crate::sender_key_device_cache::SenderKeyDeviceMap;
@@ -631,7 +631,7 @@ impl Client {
 
         // No empty-cache early-exit: WA Web iterates an empty `senderKey` Map
         // as `false` per participant, so the filter below must run unconditionally.
-        let is_lid_mode = group_info.addressing_mode == wacore::types::message::AddressingMode::Lid;
+        let is_lid_mode = group_info.addressing_mode == wa_rs_core::types::message::AddressingMode::Lid;
         let jids_to_resolve: Vec<Jid> = group_info
             .participants
             .iter()
@@ -730,7 +730,7 @@ impl Client {
     /// On mismatch, invalidates sender key device cache and group info cache.
     fn spawn_phash_validation(
         &self,
-        rx: futures::channel::oneshot::Receiver<std::sync::Arc<wacore_binary::OwnedNodeRef>>,
+        rx: futures::channel::oneshot::Receiver<std::sync::Arc<wa_rs_binary::OwnedNodeRef>>,
         our_phash: String,
         jid: Jid,
         invalidate_group_cache: bool,
@@ -741,7 +741,7 @@ impl Client {
         };
         self.runtime
             .spawn(Box::pin(async move {
-                let ack = match wacore::runtime::timeout(
+                let ack = match wa_rs_core::runtime::timeout(
                     &*client.runtime,
                     std::time::Duration::from_secs(10),
                     rx,
@@ -788,8 +788,8 @@ impl Client {
                                 "phash mismatch: clear_sender_key_devices failed: {e} — \
                                  deleting own sender key as fallback to force redistribution"
                             );
-                            use wacore::libsignal::store::sender_key_name::SenderKeyName;
-                            use wacore::types::jid::JidExt;
+                            use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
+                            use wa_rs_core::types::jid::JidExt;
                             let snapshot =
                                 client.persistence_manager.get_device_snapshot().await;
                             for own in snapshot.lid.iter().chain(snapshot.pn.iter()) {
@@ -818,10 +818,10 @@ impl Client {
     /// (already in <participants>) uses device JIDs with <enc> children.
     async fn ensure_status_participants(
         &self,
-        stanza: wacore_binary::Node,
-        group_info: &wacore::client::context::GroupInfo,
-    ) -> Result<wacore_binary::Node, anyhow::Error> {
-        Ok(wacore::send::ensure_status_participants(stanza, group_info))
+        stanza: wa_rs_binary::Node,
+        group_info: &wa_rs_core::client::context::GroupInfo,
+    ) -> Result<wa_rs_binary::Node, anyhow::Error> {
+        Ok(wa_rs_core::send::ensure_status_participants(stanza, group_info))
     }
 
     /// Delete a message for everyone in the chat (revoke).
@@ -932,7 +932,7 @@ impl Client {
             pin_in_chat_message: Some(wa::message::PinInChatMessage {
                 key: Some(key),
                 r#type: Some(pin_type as i32),
-                sender_timestamp_ms: Some(wacore::time::now_millis()),
+                sender_timestamp_ms: Some(wa_rs_core::time::now_millis()),
             }),
             message_context_info: Some(wa::MessageContextInfo {
                 message_add_on_duration_in_secs: Some(duration_secs),
@@ -1005,7 +1005,7 @@ impl Client {
         let tc_issue_target = to.clone();
 
         let mut dm_phash: Option<String> = None;
-        let stanza_to_send: wacore_binary::Node = if peer && !to.is_group() {
+        let stanza_to_send: wa_rs_binary::Node = if peer && !to.is_group() {
             // Peer messages are only valid for individual users, not groups
             // Resolve encryption JID and acquire lock ONLY for encryption
             let encryption_jid = self.resolve_encryption_jid(&to).await;
@@ -1016,7 +1016,7 @@ impl Client {
 
             let mut store_adapter = self.signal_adapter().await;
 
-            wacore::send::prepare_peer_stanza(
+            wa_rs_core::send::prepare_peer_stanza(
                 &mut store_adapter.session_store,
                 &mut store_adapter.identity_store,
                 to,
@@ -1063,7 +1063,7 @@ impl Client {
             }
 
             let force_skdm = {
-                use wacore::libsignal::store::sender_key_name::SenderKeyName;
+                use wa_rs_core::libsignal::store::sender_key_name::SenderKeyName;
                 let sender_address = own_sending_jid.to_protocol_address();
                 let sender_key_name = SenderKeyName::from_parts(&to_str, sender_address.as_str());
 
@@ -1117,7 +1117,7 @@ impl Client {
                     .await
             };
 
-            match wacore::send::prepare_group_stanza(
+            match wa_rs_core::send::prepare_group_stanza(
                 &*self.runtime,
                 &mut stores,
                 self,
@@ -1162,7 +1162,7 @@ impl Client {
                             self.signal_adapter_from(device_store_arc.clone());
                         let mut stores_retry = store_adapter_retry.as_signal_stores();
 
-                        let retry_prepared = wacore::send::prepare_group_stanza(
+                        let retry_prepared = wa_rs_core::send::prepare_group_stanza(
                             &*self.runtime,
                             &mut stores_retry,
                             self,
@@ -1213,7 +1213,7 @@ impl Client {
             // PN→LID mapping (WA Web: ManagePhoneNumberMappingJob)
             if to.is_pn() && self.lid_pn_cache.get_current_lid(&to.user).await.is_none() {
                 let sid = self.generate_request_id();
-                let spec = wacore::iq::usync::LidQuerySpec::new(vec![to.to_non_ad()], sid);
+                let spec = wa_rs_core::iq::usync::LidQuerySpec::new(vec![to.to_non_ad()], sid);
                 // Best-effort: WA Web also catches and warns on failure
                 match self.execute(spec).await {
                     Ok(resp) => {
@@ -1286,7 +1286,7 @@ impl Client {
             // Dedup for self-DMs: recipient and own device lists overlap when
             // sending to own account. `participant_list_hash` sorts internally,
             // so reordering here is safe.
-            wacore::types::jid::sort_dedup_by_device(&mut all_dm_jids);
+            wa_rs_core::types::jid::sort_dedup_by_device(&mut all_dm_jids);
 
             self.ensure_e2e_sessions(&all_dm_jids).await?;
 
@@ -1317,7 +1317,7 @@ impl Client {
 
             let mut stores = store_adapter.as_signal_stores();
 
-            let prepared = wacore::send::prepare_dm_stanza(
+            let prepared = wa_rs_core::send::prepare_dm_stanza(
                 &*self.runtime,
                 &mut stores,
                 self,
@@ -1423,8 +1423,8 @@ impl Client {
         to: &Jid,
         extra_nodes: &mut Vec<Node>,
     ) -> (bool, Option<String>) {
-        use wacore::iq::props::config_codes;
-        use wacore::iq::tctoken::{
+        use wa_rs_core::iq::props::config_codes;
+        use wa_rs_core::iq::tctoken::{
             build_cs_token_node, build_tc_token_node, compute_cs_token, is_tc_token_expired_with,
             should_send_new_tc_token_with,
         };
@@ -1510,7 +1510,7 @@ impl Client {
                         // HMAC input is "user@lid" (account LID without device suffix),
                         // matching WA Web's accountLid.toString()
                         let recipient_lid =
-                            wacore_binary::Jid::new(*lid_user, Server::Lid).to_string();
+                            wa_rs_binary::Jid::new(*lid_user, Server::Lid).to_string();
                         let cs_token = compute_cs_token(salt, &recipient_lid);
                         extra_nodes.push(build_cs_token_node(&cs_token));
                         log::debug!(target: "Client/CsToken", "Attached cstoken for {} (NCT fallback)", to);
@@ -1526,7 +1526,7 @@ impl Client {
 
     /// Returns `true` if the issuance IQ succeeded.
     async fn issue_tc_token_after_send(&self, to: &Jid) -> bool {
-        use wacore::iq::tctoken::IssuePrivacyTokensSpec;
+        use wa_rs_core::iq::tctoken::IssuePrivacyTokensSpec;
 
         // Bots and status broadcast don't participate in the privacy token system
         if to.is_bot() || to.is_status_broadcast() {
@@ -1550,16 +1550,16 @@ impl Client {
     /// Returns true if at least one token was persisted.
     pub(crate) async fn store_issued_tc_tokens(
         &self,
-        tokens: &[wacore::iq::tctoken::ReceivedTcToken],
+        tokens: &[wa_rs_core::iq::tctoken::ReceivedTcToken],
     ) -> bool {
-        use wacore::store::traits::TcTokenEntry;
+        use wa_rs_core::store::traits::TcTokenEntry;
 
         if tokens.is_empty() {
             return false;
         }
 
         let backend = self.persistence_manager.backend();
-        let now = wacore::time::now_secs();
+        let now = wa_rs_core::time::now_secs();
         let mut any_stored = false;
         for received in tokens {
             if received.token.is_empty() {
@@ -1586,10 +1586,10 @@ impl Client {
     /// sender_timestamp for identity-change re-issuance (bucket continuity).
     async fn store_issued_tc_tokens_with_sender_ts(
         &self,
-        tokens: &[wacore::iq::tctoken::ReceivedTcToken],
+        tokens: &[wa_rs_core::iq::tctoken::ReceivedTcToken],
         sender_ts: i64,
     ) {
-        use wacore::store::traits::TcTokenEntry;
+        use wa_rs_core::store::traits::TcTokenEntry;
 
         let backend = self.persistence_manager.backend();
         for received in tokens {
@@ -1608,7 +1608,7 @@ impl Client {
     }
 
     async fn mark_tc_token_used_after_send(&self, token_key: &str) {
-        use wacore::store::traits::TcTokenEntry;
+        use wa_rs_core::store::traits::TcTokenEntry;
 
         let backend = self.persistence_manager.backend();
         let existing = match backend.get_tc_token(token_key).await {
@@ -1627,7 +1627,7 @@ impl Client {
         }
 
         let updated_entry = TcTokenEntry {
-            sender_timestamp: Some(wacore::time::now_secs()),
+            sender_timestamp: Some(wa_rs_core::time::now_secs()),
             ..entry
         };
         if let Err(e) = backend.put_tc_token(token_key, &updated_entry).await {
@@ -1639,7 +1639,7 @@ impl Client {
     /// Only re-issues if we previously sent a token (sender_timestamp valid).
     /// Uses session_locks to deduplicate concurrent spawns for the same sender.
     pub(crate) async fn reissue_tc_token_after_identity_change(&self, sender: &Jid) {
-        use wacore::iq::tctoken::{IssuePrivacyTokensSpec, is_sender_tc_token_expired};
+        use wa_rs_core::iq::tctoken::{IssuePrivacyTokensSpec, is_sender_tc_token_expired};
 
         // Dedup via session_locks — bare JID won't collide with protocol addresses ("user:device")
         let bare = sender.to_non_ad().to_string();
@@ -1704,7 +1704,7 @@ impl Client {
     ///
     /// Used by profile picture, presence subscribe, and other features that need tctoken gating.
     pub(crate) async fn lookup_tc_token_for_jid(&self, jid: &Jid) -> Option<Vec<u8>> {
-        use wacore::iq::tctoken::is_tc_token_expired_with;
+        use wa_rs_core::iq::tctoken::is_tc_token_expired_with;
 
         let resolved_lid = if jid.is_lid() {
             None
@@ -1739,8 +1739,8 @@ impl Client {
         for jid in device_jids {
             keys.push(self.resolve_encryption_jid(jid).await);
         }
-        keys.sort_unstable_by(wacore::types::jid::cmp_for_lock_order);
-        keys.dedup_by(|a, b| wacore::types::jid::cmp_for_lock_order(a, b).is_eq());
+        keys.sort_unstable_by(wa_rs_core::types::jid::cmp_for_lock_order);
+        keys.dedup_by(|a, b| wa_rs_core::types::jid::cmp_for_lock_order(a, b).is_eq());
         keys
     }
 
@@ -1750,18 +1750,18 @@ impl Client {
         jids: &[Jid],
     ) -> Vec<std::sync::Arc<async_lock::Mutex<()>>> {
         let mut mutexes = Vec::with_capacity(jids.len());
-        let mut buf = wacore::types::jid::make_address_buffer();
+        let mut buf = wa_rs_core::types::jid::make_address_buffer();
         for jid in jids {
-            wacore::types::jid::write_protocol_address_to(jid, &mut buf);
+            wa_rs_core::types::jid::write_protocol_address_to(jid, &mut buf);
             mutexes.push(self.session_lock_for(&buf).await);
         }
         mutexes
     }
 
     /// Build tctoken timing config from AB props, falling back to defaults.
-    pub(crate) async fn tc_token_config(&self) -> wacore::iq::tctoken::TcTokenConfig {
-        use wacore::iq::props::config_codes;
-        use wacore::iq::tctoken::{TC_TOKEN_BUCKET_DURATION, TC_TOKEN_NUM_BUCKETS, TcTokenConfig};
+    pub(crate) async fn tc_token_config(&self) -> wa_rs_core::iq::tctoken::TcTokenConfig {
+        use wa_rs_core::iq::props::config_codes;
+        use wa_rs_core::iq::tctoken::{TC_TOKEN_BUCKET_DURATION, TC_TOKEN_NUM_BUCKETS, TcTokenConfig};
 
         TcTokenConfig {
             bucket_duration: self
@@ -1806,7 +1806,7 @@ impl Client {
     /// Resolve the target JID for privacy token issuance.
     /// Gated by `lid_trusted_token_issue_to_lid` — LID when true, PN when false.
     async fn resolve_issuance_jid(&self, jid: &Jid) -> Jid {
-        use wacore::iq::props::config_codes;
+        use wa_rs_core::iq::props::config_codes;
 
         // Default true: issue to LID by default (safer — server accepts both)
         let issue_to_lid = self
@@ -2243,9 +2243,9 @@ mod tests {
     /// Fails if the empty-cache early-exit is reintroduced.
     #[tokio::test]
     async fn resolve_skdm_targets_distributes_when_cache_empty_but_devices_known() {
-        use wacore::client::context::GroupInfo;
-        use wacore::store::traits::{DeviceInfo, DeviceListRecord};
-        use wacore::types::message::AddressingMode;
+        use wa_rs_core::client::context::GroupInfo;
+        use wa_rs_core::store::traits::{DeviceInfo, DeviceListRecord};
+        use wa_rs_core::types::message::AddressingMode;
 
         let client = crate::test_utils::create_test_client().await;
         let group_jid = "120363161500776365@g.us";
@@ -2261,7 +2261,7 @@ mod tests {
                     device_id: 0,
                     key_index: None,
                 }],
-                timestamp: wacore::time::now_secs(),
+                timestamp: wa_rs_core::time::now_secs(),
                 phash: None,
                 raw_id: None,
             };

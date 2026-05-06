@@ -10,9 +10,9 @@ use hmac::Hmac;
 use hmac::Mac;
 use sha2::Sha256;
 use thiserror::Error;
-use waproto::whatsapp as wa;
-use waproto::whatsapp::ExternalBlobReference;
-use waproto::whatsapp::message::HistorySyncNotification;
+use wa_rs_proto::whatsapp as wa;
+use wa_rs_proto::whatsapp::ExternalBlobReference;
+use wa_rs_proto::whatsapp::message::HistorySyncNotification;
 
 #[derive(Debug, Error)]
 pub enum MediaDecryptionError {

@@ -9,12 +9,12 @@ use crate::features::groups::GroupParticipant;
 use crate::features::mex::{MexError, MexRequest};
 use log::warn;
 use serde_json::json;
-use wacore::iq::groups::{
+use wa_rs_core::iq::groups::{
     DeleteCommunityIq, GetLinkedGroupsParticipantsIq, GroupCreateIq, GroupCreateOptions,
     JoinLinkedGroupIq, LinkSubgroupsIq, QueryLinkedGroupIq, UnlinkSubgroupsIq,
 };
-use wacore::iq::mex_ids::community as community_docs;
-use wacore_binary::Jid;
+use wa_rs_core::iq::mex_ids::community as community_docs;
+use wa_rs_binary::Jid;
 
 // Types
 
@@ -141,7 +141,7 @@ impl<'a> Community<'a> {
         let mut metadata = GroupMetadata::from(group);
 
         if let Some(desc_text) = description
-            && let Ok(desc) = wacore::iq::groups::GroupDescription::new(&desc_text)
+            && let Ok(desc) = wa_rs_core::iq::groups::GroupDescription::new(&desc_text)
         {
             self.client
                 .groups()

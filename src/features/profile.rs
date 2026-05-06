@@ -6,11 +6,11 @@ use crate::client::Client;
 use crate::store::commands::DeviceCommand;
 use anyhow::Result;
 use log::{debug, warn};
-use wacore::iq::contacts::SetProfilePictureSpec;
-use wacore::iq::profile::SetStatusTextSpec;
-use wacore_binary::builder::NodeBuilder;
+use wa_rs_core::iq::contacts::SetProfilePictureSpec;
+use wa_rs_core::iq::profile::SetStatusTextSpec;
+use wa_rs_binary::builder::NodeBuilder;
 
-pub use wacore::iq::contacts::SetProfilePictureResponse;
+pub use wa_rs_core::iq::contacts::SetProfilePictureResponse;
 
 /// Feature handle for profile operations.
 pub struct Profile<'a> {
@@ -119,8 +119,8 @@ impl<'a> Profile<'a> {
     /// Build and send the `setting_pushName` app state mutation.
     async fn send_push_name_mutation(&self, name: &str) -> Result<()> {
         use rand::Rng;
-        use wacore::appstate::encode::encode_record;
-        use waproto::whatsapp as wa;
+        use wa_rs_core::appstate::encode::encode_record;
+        use wa_rs_proto::whatsapp as wa;
 
         let index = serde_json::to_vec(&["setting_pushName"])?;
 
@@ -128,7 +128,7 @@ impl<'a> Profile<'a> {
             push_name_setting: Some(wa::sync_action_value::PushNameSetting {
                 name: Some(name.to_string()),
             }),
-            timestamp: Some(wacore::time::now_millis()),
+            timestamp: Some(wa_rs_core::time::now_millis()),
             ..Default::default()
         };
 
@@ -157,7 +157,7 @@ impl<'a> Profile<'a> {
 
         self.client
             .send_app_state_patch(
-                wacore::appstate::patch_decode::WAPatchName::CriticalBlock.as_str(),
+                wa_rs_core::appstate::patch_decode::WAPatchName::CriticalBlock.as_str(),
                 vec![mutation],
             )
             .await

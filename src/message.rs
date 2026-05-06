@@ -5,22 +5,22 @@ use log::{debug, warn};
 use prost::Message as ProtoMessage;
 
 use std::sync::Arc;
-use wacore::libsignal::crypto::DecryptionError;
-use wacore::libsignal::protocol::SenderKeyDistributionMessage;
-use wacore::libsignal::protocol::group_decrypt;
-use wacore::libsignal::protocol::process_sender_key_distribution_message;
-use wacore::libsignal::protocol::{
+use wa_rs_core::libsignal::crypto::DecryptionError;
+use wa_rs_core::libsignal::protocol::SenderKeyDistributionMessage;
+use wa_rs_core::libsignal::protocol::group_decrypt;
+use wa_rs_core::libsignal::protocol::process_sender_key_distribution_message;
+use wa_rs_core::libsignal::protocol::{
     PreKeySignalMessage, SignalMessage, SignalProtocolError, UsePQRatchet, message_decrypt,
 };
-use wacore::libsignal::protocol::{
+use wa_rs_core::libsignal::protocol::{
     PublicKey as SignalPublicKey, SENDERKEY_MESSAGE_CURRENT_VERSION,
 };
-use wacore::message_processing::EncType;
-use wacore::types::jid::{JidExt, make_sender_key_name};
-use wacore_binary::Jid;
-use wacore_binary::JidExt as _;
-use wacore_binary::{NodeRef, OwnedNodeRef};
-use waproto::whatsapp::{self as wa};
+use wa_rs_core::message_processing::EncType;
+use wa_rs_core::types::jid::{JidExt, make_sender_key_name};
+use wa_rs_binary::Jid;
+use wa_rs_binary::JidExt as _;
+use wa_rs_binary::{NodeRef, OwnedNodeRef};
+use wa_rs_proto::whatsapp::{self as wa};
 
 /// Maximum retry attempts per message (matches WhatsApp Web's MAX_RETRY = 5).
 /// After this many retries, we stop sending retry receipts and rely solely on PDO.
@@ -72,12 +72,12 @@ pub(crate) struct ClassifiedMessage {
 /// WhatsApp Web logs metrics when retry count exceeds this value.
 const HIGH_RETRY_COUNT_THRESHOLD: u8 = 3;
 
-pub(crate) use wacore::protocol::retry::RetryReason;
+pub(crate) use wa_rs_core::protocol::retry::RetryReason;
 
 impl Client {
     /// Dispatches a successfully parsed message to the event bus and sends a delivery receipt.
     fn dispatch_parsed_message(self: &Arc<Self>, msg: wa::Message, info: &Arc<MessageInfo>) {
-        use wacore::proto_helpers::MessageExt;
+        use wa_rs_core::proto_helpers::MessageExt;
 
         let mut info = Arc::clone(info);
         if info.ephemeral_expiration.is_none()
@@ -150,7 +150,7 @@ impl Client {
         decrypt_fail_mode: crate::types::events::DecryptFailMode,
     ) -> bool {
         let dedup_key =
-            wacore::types::message::ChatMessageId::new(info.source.chat.clone(), info.id.clone());
+            wa_rs_core::types::message::ChatMessageId::new(info.source.chat.clone(), info.id.clone());
         // The init future only runs for the winning caller. Others receive
         // the cached `()` and leave the flag as false.
         let fresh = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
@@ -738,7 +738,7 @@ impl Client {
         sender_encryption_jid: &Jid,
         decrypt_fail_mode: crate::types::events::DecryptFailMode,
     ) -> (bool, bool, bool) {
-        use wacore::libsignal::protocol::CiphertextMessage;
+        use wa_rs_core::libsignal::protocol::CiphertextMessage;
         if payloads.is_empty() {
             return (false, false, false);
         }
@@ -1288,7 +1288,7 @@ impl Client {
         padding_version: u8,
         info: &Arc<MessageInfo>,
     ) -> Result<(), anyhow::Error> {
-        let original_msg = wacore::messages::decode_plaintext(padded_plaintext, padding_version)?;
+        let original_msg = wa_rs_core::messages::decode_plaintext(padded_plaintext, padding_version)?;
         log::debug!(
             "[msg:{}] Successfully decrypted message from {}: type={} [batch path]",
             info.id,
@@ -1309,7 +1309,7 @@ impl Client {
         // the primary device). The actual content (reactions, text, etc.)
         // is nested inside device_sent_message.message and must be
         // extracted before protocol checks or dispatch.
-        let mut msg = wacore::messages::unwrap_device_sent(original_msg);
+        let mut msg = wa_rs_core::messages::unwrap_device_sent(original_msg);
 
         // Post-decryption logic (SKDM, sync keys, etc.)
         if let Some(skdm) = &msg.sender_key_distribution_message
@@ -1352,7 +1352,7 @@ impl Client {
         // (protocol-level key exchange) with no user-visible content.
         // These arrive as a separate pkmsg enc node alongside the actual
         // group message (skmsg) and would otherwise surface as "unknown".
-        if wacore::messages::is_sender_key_distribution_only(&msg) {
+        if wa_rs_core::messages::is_sender_key_distribution_only(&msg) {
             log::debug!(
                 "[msg:{}] Skipping event dispatch for sender key distribution message",
                 info.id
@@ -1369,15 +1369,15 @@ impl Client {
     async fn try_pn_to_lid_migration_decrypt(
         self: &Arc<Self>,
         sender_jid: &Jid,
-        signal_address: &wacore::libsignal::protocol::ProtocolAddress,
-        parsed_message: &wacore::libsignal::protocol::CiphertextMessage,
+        signal_address: &wa_rs_core::libsignal::protocol::ProtocolAddress,
+        parsed_message: &wa_rs_core::libsignal::protocol::CiphertextMessage,
         adapter: &mut crate::store::signal_adapter::SignalProtocolStoreAdapter,
         rng: &mut rand::rngs::StdRng,
         enc_type: &str,
         padding_version: u8,
         info: &Arc<MessageInfo>,
     ) -> bool {
-        use wacore::libsignal::protocol::{UsePQRatchet, message_decrypt};
+        use wa_rs_core::libsignal::protocol::{UsePQRatchet, message_decrypt};
 
         if !sender_jid.is_lid() {
             return false;
@@ -1479,7 +1479,7 @@ impl Client {
 
     pub(crate) async fn parse_message_info(
         &self,
-        node: &wacore_binary::NodeRef<'_>,
+        node: &wa_rs_binary::NodeRef<'_>,
     ) -> Result<MessageInfo, anyhow::Error> {
         let (own_pn, own_lid) = {
             let arc = self.persistence_manager.get_device_arc().await;
@@ -1488,7 +1488,7 @@ impl Client {
         };
         let default_jid = Jid::default();
         let own_jid = own_pn.as_ref().unwrap_or(&default_jid);
-        wacore::messages::parse_message_info(node, own_jid, own_lid.as_ref())
+        wa_rs_core::messages::parse_message_info(node, own_jid, own_lid.as_ref())
     }
 
     pub(crate) async fn handle_app_state_sync_key_share(
@@ -1686,16 +1686,16 @@ impl Client {
 /// `WAWebDeviceSentMessageProtoUtils.unwrapDeviceSentMessage` logic, or returns
 /// the original message unchanged when there is no wrapper or the wrapper has
 /// no inner message.
-/// Re-export from wacore for backwards compatibility (used by tests via `super::*`).
+/// Re-export from wa_rs_core for backwards compatibility (used by tests via `super::*`).
 #[cfg(test)]
 fn unwrap_device_sent(msg: wa::Message) -> wa::Message {
-    wacore::messages::unwrap_device_sent(msg)
+    wa_rs_core::messages::unwrap_device_sent(msg)
 }
 
-/// Re-export from wacore for backwards compatibility (used by tests via `super::*`).
+/// Re-export from wa_rs_core for backwards compatibility (used by tests via `super::*`).
 #[cfg(test)]
 fn is_sender_key_distribution_only(msg: &wa::Message) -> bool {
-    wacore::messages::is_sender_key_distribution_only(msg)
+    wa_rs_core::messages::is_sender_key_distribution_only(msg)
 }
 
 #[cfg(test)]
@@ -1706,12 +1706,12 @@ mod tests {
     use crate::test_utils::MockHttpClient;
     use crate::types::message::EditAttribute;
     use std::sync::Arc;
-    use wacore_binary::builder::NodeBuilder;
+    use wa_rs_binary::builder::NodeBuilder;
 
-    fn node_to_arc(node: wacore_binary::Node) -> Arc<OwnedNodeRef> {
+    fn node_to_arc(node: wa_rs_binary::Node) -> Arc<OwnedNodeRef> {
         crate::test_utils::node_to_owned_ref(&node)
     }
-    use wacore_binary::{Jid, SERVER_JID};
+    use wa_rs_binary::{Jid, SERVER_JID};
 
     fn mock_transport() -> Arc<dyn crate::transport::TransportFactory> {
         Arc::new(crate::transport::mock::MockTransportFactory::new())
@@ -1781,8 +1781,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_status_broadcast_cold_cache_resolves_to_lid() {
-        use wacore::types::jid::JidExt as _;
-        use wacore_binary::Server;
+        use wa_rs_core::types::jid::JidExt as _;
+        use wa_rs_binary::Server;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_status_cold_cache?mode=memory&cache=shared")
@@ -1874,8 +1874,8 @@ mod tests {
     /// (`@hosted` / `@hosted.lid`) must flow through cache_lid_pn_from_message.
     #[tokio::test]
     async fn test_status_broadcast_hosted_family_with_device_id_resolves_to_hosted_lid() {
-        use wacore::types::jid::JidExt as _;
-        use wacore_binary::Server;
+        use wa_rs_core::types::jid::JidExt as _;
+        use wa_rs_binary::Server;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_status_hosted_device?mode=memory&cache=shared")
@@ -1967,7 +1967,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_process_session_enc_batch_handles_session_not_found_gracefully() {
-        use wacore::libsignal::protocol::{IdentityKeyPair, KeyPair, SignalMessage};
+        use wa_rs_core::libsignal::protocol::{IdentityKeyPair, KeyPair, SignalMessage};
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_graceful_fail?mode=memory&cache=shared")
@@ -2048,7 +2048,7 @@ mod tests {
     /// and includes keys early, instead of producing an unhelpful InvalidMessage error.
     #[tokio::test]
     async fn test_empty_session_record_treated_as_session_not_found() {
-        use wacore::libsignal::protocol::{IdentityKeyPair, KeyPair, SessionRecord, SignalMessage};
+        use wa_rs_core::libsignal::protocol::{IdentityKeyPair, KeyPair, SessionRecord, SignalMessage};
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_empty_session?mode=memory&cache=shared")
@@ -2156,7 +2156,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_incoming_message_skips_skmsg_after_msg_failure() {
-        use wacore::libsignal::protocol::{IdentityKeyPair, KeyPair, SignalMessage};
+        use wa_rs_core::libsignal::protocol::{IdentityKeyPair, KeyPair, SignalMessage};
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_skip_skmsg_test?mode=memory&cache=shared")
@@ -2243,7 +2243,7 @@ mod tests {
     async fn test_self_sent_lid_group_message_sender_key_mismatch() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::libsignal::protocol::{
+        use wa_rs_core::libsignal::protocol::{
             SenderKeyStore, create_sender_key_distribution_message,
             process_sender_key_distribution_message,
         };
@@ -2349,7 +2349,7 @@ mod tests {
     async fn test_multiple_lid_participants_sender_key_isolation() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::libsignal::protocol::{
+        use wa_rs_core::libsignal::protocol::{
             SenderKeyStore, create_sender_key_distribution_message,
             process_sender_key_distribution_message,
         };
@@ -2457,7 +2457,7 @@ mod tests {
     /// - LID without device numbers
     #[test]
     fn test_lid_jid_parsing_edge_cases() {
-        use wacore_binary::Jid;
+        use wa_rs_binary::Jid;
 
         // Single dot in user portion
         let lid1: Jid = "100000000000001.1:75@lid"
@@ -2499,8 +2499,8 @@ mod tests {
     /// - device_id is always 0
     #[test]
     fn test_lid_protocol_address_consistency() {
-        use wacore::types::jid::JidExt as CoreJidExt;
-        use wacore_binary::Jid;
+        use wa_rs_core::types::jid::JidExt as CoreJidExt;
+        use wa_rs_binary::Jid;
 
         // Format: (jid_str, expected_name, expected_device_id, expected_to_string)
         let test_cases = vec![
@@ -2561,8 +2561,8 @@ mod tests {
     async fn test_parse_message_info_sender_alt_extraction() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::types::message::AddressingMode;
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_core::types::message::AddressingMode;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_sender_alt_test?mode=memory&cache=shared")
@@ -2659,25 +2659,25 @@ mod tests {
 
     /// Test that device query logic uses phone numbers for LID participants
     ///
-    /// This is a unit test for the logic in wacore/src/send.rs that converts
+    /// This is a unit test for the logic in wa_rs_core/src/send.rs that converts
     /// LID JIDs to phone number JIDs for device queries.
     #[test]
     fn test_lid_to_phone_mapping_for_device_queries() {
         use std::collections::HashMap;
-        use wacore::client::context::GroupInfo;
-        use wacore::types::message::AddressingMode;
-        use wacore_binary::Jid;
+        use wa_rs_core::client::context::GroupInfo;
+        use wa_rs_core::types::message::AddressingMode;
+        use wa_rs_binary::Jid;
 
         // Simulate a LID group with phone number mappings
         let mut lid_to_pn_map = HashMap::new();
         lid_to_pn_map.insert(
-            wacore_binary::CompactString::from("100000000000001.1"),
+            wa_rs_binary::CompactString::from("100000000000001.1"),
             "15551234567@s.whatsapp.net"
                 .parse()
                 .expect("test JID should be valid"),
         );
         lid_to_pn_map.insert(
-            wacore_binary::CompactString::from("987654321000000.2"),
+            wa_rs_binary::CompactString::from("987654321000000.2"),
             "551234567890@s.whatsapp.net"
                 .parse()
                 .expect("test JID should be valid"),
@@ -2732,13 +2732,13 @@ mod tests {
     #[test]
     fn test_mixed_lid_and_phone_participants() {
         use std::collections::HashMap;
-        use wacore::client::context::GroupInfo;
-        use wacore::types::message::AddressingMode;
-        use wacore_binary::Jid;
+        use wa_rs_core::client::context::GroupInfo;
+        use wa_rs_core::types::message::AddressingMode;
+        use wa_rs_binary::Jid;
 
         let mut lid_to_pn_map = HashMap::new();
         lid_to_pn_map.insert(
-            wacore_binary::CompactString::from("100000000000001.1"),
+            wa_rs_binary::CompactString::from("100000000000001.1"),
             "15551234567@s.whatsapp.net"
                 .parse()
                 .expect("test JID should be valid"),
@@ -2785,7 +2785,7 @@ mod tests {
     #[test]
     fn test_own_jid_check_in_lid_mode() {
         use std::collections::HashMap;
-        use wacore_binary::Jid;
+        use wa_rs_binary::Jid;
 
         let own_lid: Jid = "100000000000001.1@lid"
             .parse()
@@ -2797,7 +2797,7 @@ mod tests {
         let mut lid_to_pn_map = HashMap::new();
         lid_to_pn_map.insert("100000000000001.1".to_string(), own_phone.clone());
 
-        // Simulate the own JID check logic from wacore/src/send.rs
+        // Simulate the own JID check logic from wa_rs_core/src/send.rs
         let own_base_jid = own_lid.to_non_ad();
         let own_jid_to_check = if own_base_jid.is_lid() {
             lid_to_pn_map
@@ -2819,7 +2819,7 @@ mod tests {
     async fn test_sender_key_always_uses_display_jid() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::libsignal::protocol::{SenderKeyStore, create_sender_key_distribution_message};
+        use wa_rs_core::libsignal::protocol::{SenderKeyStore, create_sender_key_distribution_message};
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_display_jid_test?mode=memory&cache=shared")
@@ -2909,12 +2909,12 @@ mod tests {
     async fn test_second_message_with_only_skmsg_decrypts() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::libsignal::protocol::{
+        use wa_rs_core::libsignal::protocol::{
             create_sender_key_distribution_message, process_sender_key_distribution_message,
         };
 
-        use wacore::types::message::AddressingMode;
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_core::types::message::AddressingMode;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_second_msg_test?mode=memory&cache=shared")
@@ -2965,7 +2965,7 @@ mod tests {
         // Create message with ONLY skmsg (simulating second message after session established)
         let skmsg_ciphertext = {
             let mut device_guard = device_arc.write().await;
-            let sender_key_msg = wacore::libsignal::protocol::group_encrypt(
+            let sender_key_msg = wa_rs_core::libsignal::protocol::group_encrypt(
                 &mut *device_guard,
                 &sender_key_name,
                 b"ping",
@@ -3257,7 +3257,7 @@ mod tests {
     async fn test_parse_message_info_self_sent_dm_via_lid() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_self_dm_lid_test?mode=memory&cache=shared")
@@ -3356,7 +3356,7 @@ mod tests {
     async fn test_parse_message_info_dm_from_other_via_lid() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_other_dm_lid_test?mode=memory&cache=shared")
@@ -3451,7 +3451,7 @@ mod tests {
     async fn test_parse_message_info_dm_to_self() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_dm_to_self_test?mode=memory&cache=shared")
@@ -3670,7 +3670,7 @@ mod tests {
     /// 2. This enables sending to users we've only seen as LID senders
     #[tokio::test]
     async fn test_lid_pn_cache_populated_for_lid_sender_with_participant_pn() {
-        use wacore::types::message::AddressingMode;
+        use wa_rs_core::types::message::AddressingMode;
 
         // Setup client
         let backend = Arc::new(
@@ -3821,7 +3821,7 @@ mod tests {
         use crate::lid_pn_cache::LidPnEntry;
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::types::jid::JidExt;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_pn_to_lid_session_test?mode=memory&cache=shared")
@@ -3862,7 +3862,7 @@ mod tests {
         );
 
         // Test scenario: Parse a PN-addressed DM message (with sender_lid attribute)
-        let dm_node_with_sender_lid = wacore_binary::builder::NodeBuilder::new("message")
+        let dm_node_with_sender_lid = wa_rs_binary::builder::NodeBuilder::new("message")
             .attr("from", Jid::pn(phone).to_string())
             .attr("sender_lid", Jid::lid(lid).to_string())
             .attr("id", "test_dm_with_lid")
@@ -3877,7 +3877,7 @@ mod tests {
 
         // Verify sender is PN but sender_alt is LID
         assert_eq!(info.source.sender.user, phone);
-        assert_eq!(info.source.sender.server, wacore_binary::Server::Pn);
+        assert_eq!(info.source.sender.server, wa_rs_binary::Server::Pn);
         assert!(info.source.sender_alt.is_some());
         assert_eq!(
             info.source
@@ -3893,7 +3893,7 @@ mod tests {
                 .as_ref()
                 .expect("sender_alt should be present")
                 .server,
-            wacore_binary::Server::Lid
+            wa_rs_binary::Server::Lid
         );
 
         // Now simulate what handle_incoming_message does: determine encryption JID
@@ -3910,7 +3910,7 @@ mod tests {
                 // Use the LID from the message attribute
                 Jid {
                     user: alt_jid.user.clone(),
-                    server: wacore_binary::Server::Lid,
+                    server: wa_rs_binary::Server::Lid,
                     device: sender.device,
                     agent: sender.agent,
                     integrator: sender.integrator,
@@ -3919,7 +3919,7 @@ mod tests {
                 // Use the cached LID
                 Jid {
                     user: lid_user.into(),
-                    server: wacore_binary::Server::Lid,
+                    server: wa_rs_binary::Server::Lid,
                     device: sender.device,
                     agent: sender.agent,
                     integrator: sender.integrator,
@@ -3938,7 +3938,7 @@ mod tests {
         );
         assert_eq!(
             sender_encryption_jid.server,
-            wacore_binary::Server::Lid,
+            wa_rs_binary::Server::Lid,
             "Encryption JID should use LID server"
         );
 
@@ -3960,7 +3960,7 @@ mod tests {
         use crate::lid_pn_cache::LidPnEntry;
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::types::jid::JidExt;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_cached_lid_test?mode=memory&cache=shared")
@@ -3993,7 +3993,7 @@ mod tests {
         client.lid_pn_cache.add(&entry).await;
 
         // Parse a PN-addressed DM message WITHOUT sender_lid attribute
-        let dm_node_without_sender_lid = wacore_binary::builder::NodeBuilder::new("message")
+        let dm_node_without_sender_lid = wa_rs_binary::builder::NodeBuilder::new("message")
             .attr("from", Jid::pn(phone).to_string())
             // Note: No sender_lid attribute!
             .attr("id", "test_dm_no_lid")
@@ -4008,7 +4008,7 @@ mod tests {
 
         // Verify sender is PN and NO sender_alt (since there's no sender_lid attribute)
         assert_eq!(info.source.sender.user, phone);
-        assert_eq!(info.source.sender.server, wacore_binary::Server::Pn);
+        assert_eq!(info.source.sender.server, wa_rs_binary::Server::Pn);
         assert!(
             info.source.sender_alt.is_none(),
             "Should have no sender_alt without sender_lid attribute"
@@ -4025,7 +4025,7 @@ mod tests {
             {
                 Jid {
                     user: alt_jid.user.clone(),
-                    server: wacore_binary::Server::Lid,
+                    server: wa_rs_binary::Server::Lid,
                     device: sender.device,
                     agent: sender.agent,
                     integrator: sender.integrator,
@@ -4034,7 +4034,7 @@ mod tests {
                 // This is the path we're testing - fallback to cached LID
                 Jid {
                     user: lid_user.into(),
-                    server: wacore_binary::Server::Lid,
+                    server: wa_rs_binary::Server::Lid,
                     device: sender.device,
                     agent: sender.agent,
                     integrator: sender.integrator,
@@ -4053,7 +4053,7 @@ mod tests {
         );
         assert_eq!(
             sender_encryption_jid.server,
-            wacore_binary::Server::Lid,
+            wa_rs_binary::Server::Lid,
             "Encryption JID should use LID server"
         );
 
@@ -4073,7 +4073,7 @@ mod tests {
     async fn test_pn_message_uses_pn_when_no_lid_mapping() {
         use crate::store::SqliteStore;
         use std::sync::Arc;
-        use wacore::types::jid::JidExt;
+        use wa_rs_core::types::jid::JidExt;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_no_lid_mapping_test?mode=memory&cache=shared")
@@ -4099,7 +4099,7 @@ mod tests {
         // Don't populate the cache - simulate first-time contact
 
         // Parse a PN-addressed DM message without sender_lid
-        let dm_node = wacore_binary::builder::NodeBuilder::new("message")
+        let dm_node = wa_rs_binary::builder::NodeBuilder::new("message")
             .attr("from", Jid::pn(phone).to_string())
             .attr("id", "test_dm_no_mapping")
             .attr("t", "1765494882")
@@ -4127,7 +4127,7 @@ mod tests {
             {
                 Jid {
                     user: alt_jid.user.clone(),
-                    server: wacore_binary::Server::Lid,
+                    server: wa_rs_binary::Server::Lid,
                     device: sender.device,
                     agent: sender.agent,
                     integrator: sender.integrator,
@@ -4135,7 +4135,7 @@ mod tests {
             } else if let Some(lid_user) = client.lid_pn_cache.get_current_lid(&sender.user).await {
                 Jid {
                     user: lid_user.into(),
-                    server: wacore_binary::Server::Lid,
+                    server: wa_rs_binary::Server::Lid,
                     device: sender.device,
                     agent: sender.agent,
                     integrator: sender.integrator,
@@ -4155,7 +4155,7 @@ mod tests {
         );
         assert_eq!(
             sender_encryption_jid.server,
-            wacore_binary::Server::Pn,
+            wa_rs_binary::Server::Pn,
             "Encryption JID should use PN server when no LID mapping"
         );
 
@@ -4171,7 +4171,7 @@ mod tests {
 
     /// Helper to create a test MessageInfo with customizable fields
     fn create_test_message_info(chat: &str, msg_id: &str, sender: &str) -> MessageInfo {
-        use wacore::types::message::{EditAttribute, MessageCategory, MessageSource, MsgMetaInfo};
+        use wa_rs_core::types::message::{EditAttribute, MessageCategory, MessageSource, MsgMetaInfo};
 
         let chat_jid: Jid = chat.parse().expect("valid chat JID");
         let sender_jid: Jid = sender.parse().expect("valid sender JID");
@@ -4191,7 +4191,7 @@ mod tests {
                 broadcast_list_owner: None,
                 recipient: None,
             },
-            timestamp: wacore::time::now_utc(),
+            timestamp: wa_rs_core::time::now_utc(),
             push_name: "Test User".to_string(),
             category: MessageCategory::default(),
             multicast: false,
@@ -4609,7 +4609,7 @@ mod tests {
     /// Test: Verify JID type detection for status broadcasts, broadcast lists, groups, and users.
     #[test]
     fn test_status_broadcast_jid_detection() {
-        use wacore_binary::{Jid, JidExt};
+        use wa_rs_binary::{Jid, JidExt};
 
         let status_jid: Jid = "status@broadcast".parse().expect("status JID should parse");
         assert!(status_jid.is_status_broadcast());
@@ -4728,8 +4728,8 @@ mod tests {
 
         use crate::store::SqliteStore;
         use crate::store::persistence_manager::PersistenceManager;
-        use wacore_binary::NodeContent;
-        use wacore_binary::builder::NodeBuilder;
+        use wa_rs_binary::NodeContent;
+        use wa_rs_binary::builder::NodeBuilder;
 
         let backend = Arc::new(
             SqliteStore::new("file:memdb_retry_immediate?mode=memory&cache=shared")
@@ -5408,7 +5408,7 @@ mod tests {
     // observed in production.
 
     use crate::types::events::DecryptFailMode;
-    use wacore::types::events::{Event, EventHandler};
+    use wa_rs_core::types::events::{Event, EventHandler};
 
     #[derive(Default)]
     struct EventRecorder {
@@ -5455,7 +5455,7 @@ mod tests {
     }
 
     fn build_unavailable_stanza(sender: &str, msg_id: &str, with_enc: bool) -> Arc<OwnedNodeRef> {
-        let t = wacore::time::now_secs().to_string();
+        let t = wa_rs_core::time::now_secs().to_string();
         let unavailable = NodeBuilder::new("unavailable")
             .attr("type", "view_once")
             .build();
@@ -5606,7 +5606,7 @@ mod tests {
             "5511777776666@s.whatsapp.net",
         ));
 
-        assert_eq!(info.source.chat.server, wacore_binary::Server::Broadcast);
+        assert_eq!(info.source.chat.server, wa_rs_binary::Server::Broadcast);
 
         client.spawn_pdo_request_with_options(&info, true);
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -5623,7 +5623,7 @@ mod tests {
             "5511777776666@s.whatsapp.net",
         ));
 
-        assert_eq!(info.source.chat.server, wacore_binary::Server::Broadcast);
+        assert_eq!(info.source.chat.server, wa_rs_binary::Server::Broadcast);
 
         client.spawn_pdo_request_with_options(&info, true);
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -5639,7 +5639,7 @@ mod tests {
             "85010891714716@lid",
         ));
 
-        assert_ne!(info.source.chat.server, wacore_binary::Server::Broadcast);
+        assert_ne!(info.source.chat.server, wa_rs_binary::Server::Broadcast);
 
         client.spawn_pdo_request_with_options(&info, true);
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -5665,13 +5665,13 @@ mod tests {
     /// resend requests for old messages the user likely no longer cares about.
     #[tokio::test]
     async fn test_pdo_skipped_for_ancient_messages() {
-        use wacore::types::message::ChatMessageId;
+        use wa_rs_core::types::message::ChatMessageId;
 
         let client = create_test_client_for_retry_with_id("pdo_age").await;
 
         let mut info =
             create_test_message_info("85010891714716@lid", "ANCIENT_MSG_1", "85010891714716@lid");
-        info.timestamp = wacore::time::now_utc() - chrono::Duration::days(30);
+        info.timestamp = wa_rs_core::time::now_utc() - chrono::Duration::days(30);
         let info = Arc::new(info);
 
         let cache_key = ChatMessageId::new(info.source.chat.clone(), info.id.clone());
@@ -5690,14 +5690,14 @@ mod tests {
     /// `num_days()` truncation that would otherwise accept this message.
     #[tokio::test]
     async fn test_pdo_rejects_just_past_14d_boundary() {
-        use wacore::types::message::ChatMessageId;
+        use wa_rs_core::types::message::ChatMessageId;
 
         let client = create_test_client_for_retry_with_id("pdo_boundary").await;
 
         let mut info =
             create_test_message_info("85010891714716@lid", "BOUNDARY_MSG_1", "85010891714716@lid");
         info.timestamp =
-            wacore::time::now_utc() - chrono::Duration::days(14) - chrono::Duration::minutes(1);
+            wa_rs_core::time::now_utc() - chrono::Duration::days(14) - chrono::Duration::minutes(1);
         let info = Arc::new(info);
 
         let cache_key = ChatMessageId::new(info.source.chat.clone(), info.id.clone());

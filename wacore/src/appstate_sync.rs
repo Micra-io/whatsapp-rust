@@ -17,8 +17,8 @@ use crate::appstate::{
     collect_key_ids_from_patch_list, expand_app_state_keys, process_patch, process_snapshot,
 };
 use crate::store::traits::Backend;
-use wacore_binary::{Node, NodeRef};
-use waproto::whatsapp as wa;
+use wa_rs_binary::{Node, NodeRef};
+use wa_rs_proto::whatsapp as wa;
 
 // Re-export Mutation from appstate for convenience
 pub use crate::appstate::Mutation;
